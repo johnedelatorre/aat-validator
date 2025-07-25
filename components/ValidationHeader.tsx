@@ -170,25 +170,25 @@ export function ValidationHeader({
                     <Info className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 hover:text-gray-600 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Press 1-9 on the keyboard to select sponsors</p>
+                    <p>Press 0-9 on the keyboard to select sponsors</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
               
               {/* Sponsor buttons container with responsive sizing and proper space management */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1 overflow-x-auto scrollbar-hide">
-                {recentlyUsedSponsors.slice(0, 9).map((sponsor, index) => (
+                {recentlyUsedSponsors.slice(0, 10).map((sponsor, index) => (
                   <button
                     key={sponsor.id}
                     onClick={() => onRecentSponsorSelect(sponsor)}
                     disabled={hasConfirmed}
                     className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
-                    title={`${sponsor.name} - Press ${index + 1}`}
+                    title={`${sponsor.name} - Press ${index}`}
                     style={{ minWidth: '60px' }}
                   >
                     {/* Keyboard Shortcut Number */}
                     <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      {index + 1}
+                      {index}
                     </div>
                     
                     {/* Sponsor Name with responsive sizing */}

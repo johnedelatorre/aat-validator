@@ -248,11 +248,11 @@ export default function App() {
       return;
     }
 
-    // Number keys 1-9 for sponsor selection
-    if (['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
+    // Number keys 0-9 for sponsor selection
+    if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
       e.preventDefault();
       const numberPressed = parseInt(e.key);
-      const sponsorIndex = numberPressed - 1;
+      const sponsorIndex = numberPressed;
       
       if (sponsorIndex < autoPopulatedSponsors.length) {
         const sponsor = autoPopulatedSponsors[sponsorIndex];

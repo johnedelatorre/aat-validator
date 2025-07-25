@@ -128,20 +128,20 @@ export const SponsorSelector = forwardRef<SponsorSelectorRef, SponsorSelectorPro
     onSponsorSelect(null);
   };
 
-  // NEW: Get numbered recently used sponsors (1-9)
+  // NEW: Get numbered recently used sponsors (0-9)
   const numberedRecentSponsors = useMemo(() => {
-    return recentlyUsedSponsors.slice(0, 9);
+    return recentlyUsedSponsors.slice(0, 10);
   }, [recentlyUsedSponsors]);
 
   // Handle keyboard shortcuts for sponsor selection
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Handle number key shortcuts for recently used sponsors
-    if (['1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
+    if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
       e.preventDefault();
       e.stopPropagation();
       
       const numberPressed = parseInt(e.key);
-      const sponsorIndex = numberPressed - 1;
+      const sponsorIndex = numberPressed;
       
       if (sponsorIndex < numberedRecentSponsors.length) {
         const sponsor = numberedRecentSponsors[sponsorIndex];
@@ -238,7 +238,7 @@ export const SponsorSelector = forwardRef<SponsorSelectorRef, SponsorSelectorPro
                   >
                     {/* Number Badge */}
                     <div className="w-4 h-4 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium">
-                      {index + 1}
+                      {index}
                     </div>
                     
                     {/* Sponsor Name */}
