@@ -1122,15 +1122,15 @@ export default function App() {
           }
         });
         
-        if (newList.length < 9) {
+        if (newList.length < 10) {
           mockSponsors.forEach(availableSponsor => {
-            if (!newList.some(s => s.id === availableSponsor.id) && newList.length < 9) {
+            if (!newList.some(s => s.id === availableSponsor.id) && newList.length < 10) {
               newList.push(availableSponsor);
             }
           });
         }
         
-        return newList.slice(0, 9);
+        return newList.slice(0, 10);
       });
     }
   };

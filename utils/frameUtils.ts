@@ -111,13 +111,13 @@ export const generateAutoPopulatedSponsors = (): Sponsor[] => {
     .map(id => mockSponsors.find(s => s.id === id))
     .filter(Boolean) as Sponsor[];
   
-  if (autoDetectedSponsors.length < 9) {
+  if (autoDetectedSponsors.length < 10) {
     const additionalSponsors = mockSponsors
       .filter(sponsor => !existingSponsorIds.includes(sponsor.id))
-      .slice(0, 9 - autoDetectedSponsors.length);
+      .slice(0, 10 - autoDetectedSponsors.length);
     
     autoDetectedSponsors.push(...additionalSponsors);
   }
   
-  return autoDetectedSponsors.slice(0, 9);
+  return autoDetectedSponsors.slice(0, 10);
 };
