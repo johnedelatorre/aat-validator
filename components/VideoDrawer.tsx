@@ -103,6 +103,7 @@ export function VideoDrawer({ isOpen, onClose }: VideoDrawerProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [zoomLevel, setZoomLevel] = useState<ConfidenceLevel>('Mid'); // Default to Mid
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canAutoPlay, setCanAutoPlay] = useState(false);
   

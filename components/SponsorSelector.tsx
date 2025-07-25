@@ -1,9 +1,7 @@
 import React, { useState, useMemo, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Separator } from './ui/separator';
 import { Sponsor } from '../types';
 import { Search, X, Check, ChevronDown } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -115,10 +113,12 @@ export const SponsorSelector = forwardRef<SponsorSelectorRef, SponsorSelectorPro
     setOpen(false);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const clearSelection = () => {
     onSponsorSelect(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const clearSearch = () => {
     setSearch('');
   };

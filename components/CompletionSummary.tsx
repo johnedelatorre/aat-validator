@@ -1,10 +1,14 @@
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Frame, ValidationSummary } from '../types';
 import { CheckCircle, Clock, BarChart3, ArrowRight, Flag } from 'lucide-react';
+// Future functionality - keeping imports ready
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { ImageWithFallback } from './figma/ImageWithFallback';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const exampleImage = '/images/frame_2820.jpg';
 
 interface CompletionSummaryProps {

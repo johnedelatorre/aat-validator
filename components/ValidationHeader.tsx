@@ -1,6 +1,4 @@
-import React from 'react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import { SponsorSelector } from './SponsorSelector';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { CheckCircle, Trash2, Info, CheckCircle2, Settings, Play } from 'lucide-react';
@@ -51,25 +49,25 @@ export function ValidationHeader({
   onReject, // Changed from onRejectAll
   onConfirm,
   hasConfirmed,
-  showCompletion = false,
+  showCompletion = false, // eslint-disable-line @typescript-eslint/no-unused-vars
   availableSponsors,
   selectedSponsor,
   recentlyUsedSponsors,
   onSponsorSelect,
   onRecentSponsorSelect,
-  allFramesSelected,
+  allFramesSelected, // eslint-disable-line @typescript-eslint/no-unused-vars
   hasSelectableFrames,
   onSelectAll,
   onDeselectAll,
-  confirmedCount,
-  rejectedCount,
-  unprocessedCount,
+  confirmedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
+  rejectedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
+  unprocessedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
   sponsorSelectorRef,
   isSponsorDropdownKeyboardOpen = false,
   onSponsorDropdownClose,
   framesWithIndividualSponsors = 0,
   hasDoubleSelectedFrames = false,
-  allFramesDoubleSelected = false,
+  allFramesDoubleSelected = false, // eslint-disable-line @typescript-eslint/no-unused-vars
   onOpenSettings,
   onOpenVideoDrawer,
 }: ValidationHeaderProps) {

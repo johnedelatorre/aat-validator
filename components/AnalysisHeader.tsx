@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed - not needed with new JSX transform
 
 export function AnalysisHeader() {
   return (

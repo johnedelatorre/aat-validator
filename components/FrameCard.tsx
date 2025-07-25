@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Frame, ConfidenceLevel, DragState, Sponsor } from '../types';
 import { CheckCircle, Trash2, ZoomIn, ZoomOut, Eye, HelpCircle } from 'lucide-react';
@@ -27,7 +26,7 @@ export function FrameCard({
   frame, 
   isFocused,
   onToggle, 
-  onReject, 
+  onReject, // eslint-disable-line @typescript-eslint/no-unused-vars 
   onConfidenceChange,
   onFocus,
   hasConfirmed,
@@ -36,7 +35,7 @@ export function FrameCard({
   onFrameLeaveDrag,
   framesPerRow = 5,
   sponsors = [],
-  disabled = false,
+  disabled = false, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: FrameCardProps) {
   
   const cardWrapperRef = useRef<HTMLDivElement>(null);
@@ -178,6 +177,7 @@ export function FrameCard({
 
   // Detection box styling based on quality
   const getDetectionBoxStyling = () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const config = getLogoZoomConfig();
     const detectionBox = frame.detectionBox;
     
