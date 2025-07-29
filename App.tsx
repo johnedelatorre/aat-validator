@@ -16,18 +16,23 @@ export default function App() {
     
     setIsTransitioning(true);
     
-    // Close dropdowns in the current tab before switching
-    if (activeTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current) {
-      sponsorAnalyzerRef.current.closeDropdown();
-    } else if (activeTab === 'placement-analyzer' && placementAnalyzerRef.current) {
-      placementAnalyzerRef.current.closeDropdown();
+    // Store the current tab before switching
+    const previousTab = activeTab;
+    
+    // Force close dropdowns IMMEDIATELY (before tab switch) to prevent Portal blinking
+    if (previousTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current) {
+      sponsorAnalyzerRef.current.forceCloseDropdown();
+    } else if (previousTab === 'placement-analyzer' && placementAnalyzerRef.current) {
+      placementAnalyzerRef.current.forceCloseDropdown();
     }
     
-    // Add a small delay to allow dropdown to close gracefully before tab transition
+    // Immediately switch tabs for instant visual feedback
+    setActiveTab(newTab);
+    
+    // Re-enable buttons after tab transition completes
     setTimeout(() => {
-      setActiveTab(newTab);
       setIsTransitioning(false);
-    }, 150); // 150ms delay for smooth dropdown close
+    }, 350); // Slightly longer than the 300ms opacity transition
   };
 
   return (

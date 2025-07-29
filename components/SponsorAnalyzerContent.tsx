@@ -14,6 +14,7 @@ interface SponsorAnalyzerContentProps {
 
 export interface SponsorAnalyzerContentRef {
   closeDropdown: () => void;
+  forceCloseDropdown: () => void;
 }
 
 export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, SponsorAnalyzerContentProps>(
@@ -650,6 +651,13 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
+      if (sponsorSelectorRef.current) {
+        sponsorSelectorRef.current.closeDropdown();
+      }
+    },
+    forceCloseDropdown: () => {
+      // Immediately close dropdown without animation for tab switches
+      setIsSponsorDropdownKeyboardOpen(false);
       if (sponsorSelectorRef.current) {
         sponsorSelectorRef.current.closeDropdown();
       }

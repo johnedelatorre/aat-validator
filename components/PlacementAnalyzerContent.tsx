@@ -15,6 +15,7 @@ interface PlacementAnalyzerContentProps {
 
 export interface PlacementAnalyzerContentRef {
   closeDropdown: () => void;
+  forceCloseDropdown: () => void;
 }
 
 export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, PlacementAnalyzerContentProps>(
@@ -681,6 +682,13 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
+      if (placementSelectorRef.current) {
+        placementSelectorRef.current.closeDropdown();
+      }
+    },
+    forceCloseDropdown: () => {
+      // Immediately close dropdown without animation for tab switches
+      setIsPlacementDropdownKeyboardOpen(false);
       if (placementSelectorRef.current) {
         placementSelectorRef.current.closeDropdown();
       }
