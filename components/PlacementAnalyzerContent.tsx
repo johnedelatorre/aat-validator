@@ -9,7 +9,11 @@ import { generateMockFrames, groupFramesIntoRows } from '../utils/frameUtils';
 import { createKeyboardNavigationHelpers } from '../utils/keyboardUtils';
 import { Frame, DragState, PageSettings, RowTransition, ConfidenceLevel, DragAction, RowTransitionState } from '../types';
 
-export function PlacementAnalyzerContent() {
+interface PlacementAnalyzerContentProps {
+  isActive: boolean;
+}
+
+export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentProps) {
   // Page settings state
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     framesPerRow: 5,
@@ -395,7 +399,9 @@ export function PlacementAnalyzerContent() {
         }
         break;
 
-              case 's':
+      case 's':
+        // Only handle 's' key when this tab is active
+        if (!isActive) return;
         e.preventDefault();
         {
           // Always allow opening placement selector, even without selected frames

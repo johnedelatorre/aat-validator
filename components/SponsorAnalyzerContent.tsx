@@ -8,7 +8,11 @@ import { generateMockFrames, groupFramesIntoRows, detectMostLikelySponsor, gener
 import { createKeyboardNavigationHelpers } from '../utils/keyboardUtils';
 import { Frame, Sponsor, DragState, PageSettings, RowTransition, ConfidenceLevel, DragAction, RowTransitionState } from '../types';
 
-export function SponsorAnalyzerContent() {
+interface SponsorAnalyzerContentProps {
+  isActive: boolean;
+}
+
+export function SponsorAnalyzerContent({ isActive }: SponsorAnalyzerContentProps) {
   // Page settings state
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     framesPerRow: 5,
@@ -362,6 +366,8 @@ export function SponsorAnalyzerContent() {
         break;
 
       case 's':
+        // Only handle 's' key when this tab is active
+        if (!isActive) return;
         e.preventDefault();
         {
           const selectedFrames = framesRef.current.filter(frame => frame.isSelected && !frame.isRejected && !frame.isConfirmed && !frame.isMarkedForRejection);

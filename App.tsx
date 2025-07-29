@@ -59,7 +59,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <SponsorAnalyzerContent />
+            <SponsorAnalyzerContent isActive={activeTab === 'sponsor-analyzer'} />
           </div>
         </div>
 
@@ -70,7 +70,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <PlacementAnalyzerContent />
+            <PlacementAnalyzerContent isActive={activeTab === 'placement-analyzer'} />
           </div>
         </div>
       </div>
