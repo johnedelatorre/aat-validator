@@ -15,7 +15,6 @@ interface PlacementAnalyzerContentProps {
 
 export interface PlacementAnalyzerContentRef {
   closeDropdown: () => void;
-  forceCloseDropdown: () => void;
 }
 
 export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, PlacementAnalyzerContentProps>(
@@ -642,6 +641,17 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
     }
   }, [allFramesProcessed, frames.length, hasConfirmed, currentBatch, pageSettings.defaultZoomLevel, frames]);
 
+  // Close dropdown naturally when tab becomes inactive
+  useEffect(() => {
+    if (!isActive && placementSelectorRef.current) {
+      // Natural fade-out when switching away from this tab
+      setTimeout(() => {
+        setIsPlacementDropdownKeyboardOpen(false);
+        placementSelectorRef.current?.closeDropdown();
+      }, 50); // Small delay for smooth transition
+    }
+  }, [isActive]);
+
   // Keyboard event listeners
   useEffect(() => {
     // Only add event listeners when this tab is active
@@ -682,13 +692,6 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
-      if (placementSelectorRef.current) {
-        placementSelectorRef.current.closeDropdown();
-      }
-    },
-    forceCloseDropdown: () => {
-      // Immediately close dropdown without animation for tab switches
-      setIsPlacementDropdownKeyboardOpen(false);
       if (placementSelectorRef.current) {
         placementSelectorRef.current.closeDropdown();
       }

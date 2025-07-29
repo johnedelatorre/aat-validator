@@ -1,14 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { AnalysisHeader } from './components/AnalysisHeader';
-import { SponsorAnalyzerContent, SponsorAnalyzerContentRef } from './components/SponsorAnalyzerContent';
-import { PlacementAnalyzerContent, PlacementAnalyzerContentRef } from './components/PlacementAnalyzerContent';
+import { SponsorAnalyzerContent } from './components/SponsorAnalyzerContent';
+import { PlacementAnalyzerContent } from './components/PlacementAnalyzerContent';
 import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('sponsor-analyzer');
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const sponsorAnalyzerRef = useRef<SponsorAnalyzerContentRef>(null);
-  const placementAnalyzerRef = useRef<PlacementAnalyzerContentRef>(null);
 
   const handleTabChange = (newTab: string) => {
     // Don't switch if already on the target tab or currently transitioning
@@ -16,17 +14,7 @@ export default function App() {
     
     setIsTransitioning(true);
     
-    // Store the current tab before switching
-    const previousTab = activeTab;
-    
-    // Force close dropdowns IMMEDIATELY (before tab switch) to prevent Portal blinking
-    if (previousTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current) {
-      sponsorAnalyzerRef.current.forceCloseDropdown();
-    } else if (previousTab === 'placement-analyzer' && placementAnalyzerRef.current) {
-      placementAnalyzerRef.current.forceCloseDropdown();
-    }
-    
-    // Immediately switch tabs for instant visual feedback
+    // Simply switch tabs - let dropdowns fade naturally with tab content
     setActiveTab(newTab);
     
     // Re-enable buttons after tab transition completes
@@ -93,7 +81,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <SponsorAnalyzerContent ref={sponsorAnalyzerRef} isActive={activeTab === 'sponsor-analyzer'} />
+            <SponsorAnalyzerContent isActive={activeTab === 'sponsor-analyzer'} />
           </div>
         </div>
 
@@ -104,7 +92,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <PlacementAnalyzerContent ref={placementAnalyzerRef} isActive={activeTab === 'placement-analyzer'} />
+            <PlacementAnalyzerContent isActive={activeTab === 'placement-analyzer'} />
           </div>
         </div>
       </div>

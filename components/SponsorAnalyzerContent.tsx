@@ -14,7 +14,6 @@ interface SponsorAnalyzerContentProps {
 
 export interface SponsorAnalyzerContentRef {
   closeDropdown: () => void;
-  forceCloseDropdown: () => void;
 }
 
 export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, SponsorAnalyzerContentProps>(
@@ -611,6 +610,17 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
     }
   }, [allFramesProcessed, frames.length, hasConfirmed, currentBatch, pageSettings.defaultZoomLevel, frames]);
 
+  // Close dropdown naturally when tab becomes inactive
+  useEffect(() => {
+    if (!isActive && sponsorSelectorRef.current) {
+      // Natural fade-out when switching away from this tab
+      setTimeout(() => {
+        setIsSponsorDropdownKeyboardOpen(false);
+        sponsorSelectorRef.current?.closeDropdown();
+      }, 50); // Small delay for smooth transition
+    }
+  }, [isActive]);
+
   // Keyboard event listeners
   useEffect(() => {
     // Only add event listeners when this tab is active
@@ -651,13 +661,6 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
-      if (sponsorSelectorRef.current) {
-        sponsorSelectorRef.current.closeDropdown();
-      }
-    },
-    forceCloseDropdown: () => {
-      // Immediately close dropdown without animation for tab switches
-      setIsSponsorDropdownKeyboardOpen(false);
       if (sponsorSelectorRef.current) {
         sponsorSelectorRef.current.closeDropdown();
       }
