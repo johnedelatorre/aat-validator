@@ -1,8 +1,10 @@
 import { Button } from './ui/button';
 import { SponsorSelector } from './SponsorSelector';
+import { PlacementSelector, type SelectedPlacement } from './PlacementSelector';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { CheckCircle, Trash2, Info, CheckCircle2, Settings, Play } from 'lucide-react';
 import { Sponsor } from '../types';
+import { type PlacementType } from '../constants/placements';
 
 interface ValidationHeaderProps {
   // NEW: Title prop for tab-specific headers
@@ -15,12 +17,27 @@ interface ValidationHeaderProps {
   onConfirm: () => void;
   hasConfirmed: boolean;
   showCompletion?: boolean;
-  // Sponsor-related props
-  availableSponsors: Sponsor[];
-  selectedSponsor: Sponsor | null;
-  recentlyUsedSponsors: Sponsor[];
-  onSponsorSelect: (sponsor: Sponsor | null) => void;
-  onRecentSponsorSelect: (sponsor: Sponsor | null) => void;
+  
+  // Sponsor-related props (optional for placement workflow)
+  availableSponsors?: Sponsor[];
+  selectedSponsor?: Sponsor | null;
+  recentlyUsedSponsors?: Sponsor[];
+  onSponsorSelect?: (sponsor: Sponsor | null) => void;
+  onRecentSponsorSelect?: (sponsor: Sponsor | null) => void;
+  sponsorSelectorRef?: React.RefObject<{ openDropdown: () => void; closeDropdown: () => void }>;
+  isSponsorDropdownKeyboardOpen?: boolean;
+  onSponsorDropdownClose?: () => void;
+  framesWithIndividualSponsors?: number;
+  
+  // Placement-related props (optional for sponsor workflow)
+  selectedPlacement?: SelectedPlacement | null;
+  autoPopulatedPlacementTypes?: PlacementType[];
+  onPlacementSelect?: (placement: SelectedPlacement | null) => void;
+  placementSelectorRef?: React.RefObject<{ openDropdown: () => void; closeDropdown: () => void }>;
+  isPlacementDropdownKeyboardOpen?: boolean;
+  onPlacementDropdownClose?: () => void;
+  framesWithIndividualPlacements?: number;
+  
   // Select all/deselect all props
   allFramesSelected: boolean;
   hasSelectableFrames: boolean;
@@ -30,12 +47,6 @@ interface ValidationHeaderProps {
   confirmedCount: number;
   rejectedCount: number;
   unprocessedCount: number;
-  // KEYBOARD-DRIVEN SPONSOR SELECTION: New props
-  sponsorSelectorRef?: React.RefObject<{ openDropdown: () => void; closeDropdown: () => void }>;
-  isSponsorDropdownKeyboardOpen?: boolean;
-  onSponsorDropdownClose?: () => void; // NEW: Callback when dropdown closes
-  // NEW: Individual sponsor support
-  framesWithIndividualSponsors?: number;
   // NEW: Enhanced deselect all workflow
   hasDoubleSelectedFrames?: boolean;
   allFramesDoubleSelected?: boolean;
@@ -53,11 +64,27 @@ export function ValidationHeader({
   onConfirm,
   hasConfirmed,
   showCompletion = false, // eslint-disable-line @typescript-eslint/no-unused-vars
+  
+  // Sponsor workflow props
   availableSponsors,
   selectedSponsor,
   recentlyUsedSponsors,
   onSponsorSelect,
   onRecentSponsorSelect,
+  sponsorSelectorRef,
+  isSponsorDropdownKeyboardOpen = false,
+  onSponsorDropdownClose,
+  framesWithIndividualSponsors = 0,
+  
+  // Placement workflow props
+  selectedPlacement,
+  autoPopulatedPlacementTypes,
+  onPlacementSelect,
+  placementSelectorRef,
+  isPlacementDropdownKeyboardOpen = false,
+  onPlacementDropdownClose,
+  framesWithIndividualPlacements = 0,
+  
   allFramesSelected, // eslint-disable-line @typescript-eslint/no-unused-vars
   hasSelectableFrames,
   onSelectAll,
@@ -65,16 +92,16 @@ export function ValidationHeader({
   confirmedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
   rejectedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
   unprocessedCount, // eslint-disable-line @typescript-eslint/no-unused-vars
-  sponsorSelectorRef,
-  isSponsorDropdownKeyboardOpen = false,
-  onSponsorDropdownClose,
-  framesWithIndividualSponsors = 0,
   hasDoubleSelectedFrames = false,
   allFramesDoubleSelected = false, // eslint-disable-line @typescript-eslint/no-unused-vars
   onOpenSettings,
   onOpenVideoDrawer,
 }: ValidationHeaderProps) {
   
+  // Determine which workflow to use
+  const isPlacementWorkflow = selectedPlacement !== undefined || autoPopulatedPlacementTypes !== undefined;
+  const isSponsorWorkflow = !isPlacementWorkflow;
+
   const handleConfirm = () => {
     if (hasConfirmed) return; // Prevent double-clicking during confirmation
     onConfirm();
@@ -133,8 +160,9 @@ export function ValidationHeader({
           </div>
         </div>
 
-        {/* Recently Used Sponsors - Enhanced Display Below Main Header */}
-        {recentlyUsedSponsors.length > 0 && (
+        {/* Workflow-specific section - Enhanced Display Below Main Header */}
+        {((isSponsorWorkflow && recentlyUsedSponsors && recentlyUsedSponsors.length > 0) || 
+          (isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.length > 0)) && (
           <div className="border-t border-gray-100 bg-gray-50/80 px-6 py-3">
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Select All/Deselect All button - Responsive */}
@@ -151,18 +179,29 @@ export function ValidationHeader({
                 </Button>
               </div>
               
-              {/* Sponsor Selector - Moved from main header */}
+              {/* Workflow-specific Selector */}
               <div className="flex-shrink-0">
-                <SponsorSelector
-                  ref={sponsorSelectorRef}
-                  availableSponsors={availableSponsors}
-                  selectedSponsor={selectedSponsor}
-                  recentlyUsedSponsors={recentlyUsedSponsors}
-                  onSponsorSelect={onSponsorSelect}
-                  onRecentSponsorSelect={onRecentSponsorSelect}
-                  isKeyboardOpen={isSponsorDropdownKeyboardOpen}
-                  onDropdownClose={onSponsorDropdownClose}
-                />
+                {isSponsorWorkflow && availableSponsors && onSponsorSelect && onRecentSponsorSelect && (
+                  <SponsorSelector
+                    ref={sponsorSelectorRef}
+                    availableSponsors={availableSponsors}
+                    selectedSponsor={selectedSponsor || null}
+                    recentlyUsedSponsors={recentlyUsedSponsors || []}
+                    onSponsorSelect={onSponsorSelect}
+                    onRecentSponsorSelect={onRecentSponsorSelect}
+                    isKeyboardOpen={isSponsorDropdownKeyboardOpen}
+                    onDropdownClose={onSponsorDropdownClose}
+                  />
+                )}
+                {isPlacementWorkflow && onPlacementSelect && (
+                  <PlacementSelector
+                    ref={placementSelectorRef}
+                    selectedPlacement={selectedPlacement || null}
+                    onPlacementSelect={onPlacementSelect}
+                    isKeyboardOpen={isPlacementDropdownKeyboardOpen}
+                    onDropdownClose={onPlacementDropdownClose}
+                  />
+                )}
               </div>
               
               <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
@@ -173,17 +212,17 @@ export function ValidationHeader({
                     <Info className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 hover:text-gray-600 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Press 0-9 on the keyboard to select sponsors</p>
+                    <p>Press 0-9 on the keyboard to select {isPlacementWorkflow ? 'placement types' : 'sponsors'}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
               
-              {/* Sponsor buttons container with responsive sizing and proper space management */}
+              {/* Quick select buttons container with responsive sizing and proper space management */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1 overflow-x-auto scrollbar-hide">
-                {recentlyUsedSponsors.slice(0, 10).map((sponsor, index) => (
+                {isSponsorWorkflow && recentlyUsedSponsors && recentlyUsedSponsors.slice(0, 10).map((sponsor, index) => (
                   <button
                     key={sponsor.id}
-                    onClick={() => onRecentSponsorSelect(sponsor)}
+                    onClick={() => onRecentSponsorSelect && onRecentSponsorSelect(sponsor)}
                     disabled={hasConfirmed}
                     className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
                     title={`${sponsor.name} - Press ${index}`}
@@ -200,6 +239,33 @@ export function ValidationHeader({
                       style={{ minWidth: '20px', fontSize: 'max(10px, 0.75rem)' }}
                     >
                       {sponsor.name}
+                    </span>
+                  </button>
+                ))}
+                
+                {isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.slice(0, 10).map((placementType, index) => (
+                  <button
+                    key={placementType.id}
+                    onClick={() => {
+                      // Placement type selection is handled by keyboard shortcuts in the main component
+                      // This button is mainly for display purposes
+                    }}
+                    disabled={hasConfirmed}
+                    className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
+                    title={`${placementType.name} - Press ${index}`}
+                    style={{ minWidth: '60px' }}
+                  >
+                    {/* Keyboard Shortcut Number */}
+                    <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 text-purple-600 text-xs font-bold flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                      {index}
+                    </div>
+                    
+                    {/* Placement Type Name with responsive sizing */}
+                    <span 
+                      className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-purple-900 transition-colors whitespace-nowrap truncate max-w-[40px] sm:max-w-[80px] md:max-w-none"
+                      style={{ minWidth: '20px', fontSize: 'max(10px, 0.75rem)' }}
+                    >
+                      {placementType.name}
                     </span>
                   </button>
                 ))}
@@ -234,12 +300,20 @@ export function ValidationHeader({
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2 sm:space-x-3">
-                  {/* Confirm button - applies sponsor to selected frames (enhanced for individual sponsors) */}
+                  {/* Confirm button - applies selection to selected frames */}
                   <Button 
                     onClick={handleConfirm}
                     className="bg-green-600 hover:bg-green-700 text-white w-16 sm:w-24 flex items-center justify-center space-x-1 text-xs sm:text-sm"
-                    disabled={selectedCount === 0 || hasConfirmed || (!selectedSponsor && framesWithIndividualSponsors === 0)}
-                    title={framesWithIndividualSponsors > 0 ? `Confirm ${framesWithIndividualSponsors} individual assignments` : undefined}
+                    disabled={selectedCount === 0 || hasConfirmed || 
+                      (isSponsorWorkflow && !selectedSponsor && framesWithIndividualSponsors === 0) ||
+                      (isPlacementWorkflow && !selectedPlacement && framesWithIndividualPlacements === 0)}
+                    title={
+                      isSponsorWorkflow && framesWithIndividualSponsors > 0 
+                        ? `Confirm ${framesWithIndividualSponsors} individual assignments`
+                        : isPlacementWorkflow && framesWithIndividualPlacements > 0
+                        ? `Confirm ${framesWithIndividualPlacements} individual placements`
+                        : undefined
+                    }
                   >
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">Confirm</span>

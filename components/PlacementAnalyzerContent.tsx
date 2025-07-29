@@ -3,10 +3,11 @@ import { ValidationHeader } from './ValidationHeader';
 import { FrameGrid } from './FrameGrid';
 import { PageSettingsModal } from './PageSettingsModal';
 import { toast } from 'sonner';
-import { mockSponsors } from '../constants/sponsors';
-import { generateMockFrames, groupFramesIntoRows, detectMostLikelySponsor, generateAutoPopulatedSponsors } from '../utils/frameUtils';
+import { getPlacementTypesForRightsholderPlacement, type PlacementType } from '../constants/placements';
+import { PlacementSelector, type SelectedPlacement } from './PlacementSelector';
+import { generateMockFrames, groupFramesIntoRows } from '../utils/frameUtils';
 import { createKeyboardNavigationHelpers } from '../utils/keyboardUtils';
-import { Frame, Sponsor, DragState, PageSettings, RowTransition, ConfidenceLevel, DragAction, RowTransitionState } from '../types';
+import { Frame, DragState, PageSettings, RowTransition, ConfidenceLevel, DragAction, RowTransitionState } from '../types';
 
 export function PlacementAnalyzerContent() {
   // Page settings state
@@ -21,9 +22,9 @@ export function PlacementAnalyzerContent() {
   const [queueCount, setQueueCount] = useState(199);
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [validatedBatches, setValidatedBatches] = useState(0);
-  const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
+  const [selectedPlacement, setSelectedPlacement] = useState<SelectedPlacement | null>(null);
   
-  const [autoPopulatedSponsors, setAutoPopulatedSponsors] = useState<Sponsor[]>(() => generateAutoPopulatedSponsors());
+  const [autoPopulatedPlacementTypes, setAutoPopulatedPlacementTypes] = useState<PlacementType[]>([]);
   const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
   const [rowTransitions, setRowTransitions] = useState<Map<number, RowTransition>>(new Map());
   
@@ -38,8 +39,8 @@ export function PlacementAnalyzerContent() {
     framesRef.current = frames;
   }, [frames]);
   
-  const [isSponsorDropdownKeyboardOpen, setIsSponsorDropdownKeyboardOpen] = useState(false);
-  const sponsorSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void } | null>(null);
+  const [isPlacementDropdownKeyboardOpen, setIsPlacementDropdownKeyboardOpen] = useState(false);
+  const placementSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void } | null>(null);
   const lastActionToastRef = useRef<string | number | null>(null);
   const [showVideoDrawer, setShowVideoDrawer] = useState(false);
   
@@ -60,7 +61,7 @@ export function PlacementAnalyzerContent() {
   const rejectedCount = frames.filter(frame => frame.isRejected).length;
   const confirmedCount = frames.filter(frame => frame.isConfirmed).length;
   const unprocessedCount = frames.filter(frame => !frame.isRejected && !frame.isConfirmed).length;
-  const framesWithIndividualSponsors = frames.filter(frame => frame.individualSponsor && !frame.isRejected && !frame.isConfirmed).length;
+  const framesWithIndividualPlacements = frames.filter(frame => frame.individualSponsor && !frame.isRejected && !frame.isConfirmed).length;
   const allFramesProcessed = frames.filter(frame => !frame.isRejected && !frame.isConfirmed).length === 0;
 
   // Group frames into rows
@@ -75,17 +76,18 @@ export function PlacementAnalyzerContent() {
     return rowFrames.length > 0 && rowFrames.every(frame => isFrameProcessed(frame));
   }, [isFrameProcessed]);
 
-  // Auto-detect sponsor
+  // Auto-populate placement types when a placement is selected
   useEffect(() => {
-    if (frames.length > 0 && !selectedSponsor) {
-      const detectedSponsor = detectMostLikelySponsor(frames);
-      if (detectedSponsor) {
-        setSelectedSponsor(detectedSponsor);
-      } else {
-        setSelectedSponsor(mockSponsors[0]);
-      }
+    if (selectedPlacement) {
+      const placementTypes = getPlacementTypesForRightsholderPlacement(
+        selectedPlacement.rightsholder.name,
+        selectedPlacement.placementName
+      );
+      setAutoPopulatedPlacementTypes(placementTypes.slice(0, 10)); // Limit to 10 for keyboard shortcuts
+    } else {
+      setAutoPopulatedPlacementTypes([]);
     }
-  }, [frames, selectedSponsor]);
+  }, [selectedPlacement]);
 
   // Organize rows with transitions
   const organizedRows = useMemo(() => {
@@ -197,7 +199,7 @@ export function PlacementAnalyzerContent() {
 
   // Keyboard navigation handler
   const handleKeyboardNavigation = useCallback((e: KeyboardEvent) => {
-    if (!focusedFrameId || isSponsorDropdownKeyboardOpen || showVideoDrawer) return;
+    if (!focusedFrameId || isPlacementDropdownKeyboardOpen || showVideoDrawer) return;
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
     const currentIndex = keyboardHelpers.getFrameIndex(focusedFrameId);
@@ -230,7 +232,28 @@ export function PlacementAnalyzerContent() {
       setFocusedFrameId(newFrameId);
       handleKeyboardFrameSelect(newFrameId);
     }
-  }, [focusedFrameId, isSponsorDropdownKeyboardOpen, showVideoDrawer, keyboardHelpers, handleKeyboardFrameSelect]);
+  }, [focusedFrameId, isPlacementDropdownKeyboardOpen, showVideoDrawer, keyboardHelpers, handleKeyboardFrameSelect]);
+
+  // Placement selection handlers
+  const handlePlacementSelect = (placement: SelectedPlacement | null) => {
+    const doubleSelectedFrames = frames.filter(frame => frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed);
+    
+    if (doubleSelectedFrames.length > 0 && placement) {
+      // For individual frame placement assignments, we need both placement and placement type
+      // For now, we'll just set the global placement
+      setSelectedPlacement(placement);
+    } else {
+      setSelectedPlacement(placement);
+    }
+    
+    if (isPlacementDropdownKeyboardOpen) {
+      setIsPlacementDropdownKeyboardOpen(false);
+    }
+  };
+
+  const handlePlacementDropdownClose = useCallback(() => {
+    setIsPlacementDropdownKeyboardOpen(false);
+  }, []);
 
   // Workflow shortcuts handler
   const handleWorkflowShortcuts = useCallback((e: KeyboardEvent) => {
@@ -246,14 +269,14 @@ export function PlacementAnalyzerContent() {
       return;
     }
 
-    // Number keys 0-9 for sponsor selection
+    // Number keys 0-9 for placement type selection
     if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
       e.preventDefault();
       const numberPressed = parseInt(e.key);
-      const sponsorIndex = numberPressed;
+      const placementTypeIndex = numberPressed;
       
-      if (sponsorIndex < autoPopulatedSponsors.length) {
-        const sponsor = autoPopulatedSponsors[sponsorIndex];
+      if (placementTypeIndex < autoPopulatedPlacementTypes.length) {
+        const placementType = autoPopulatedPlacementTypes[placementTypeIndex];
         
         const doubleSelectedFrames = framesRef.current.filter(frame => frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed);
         
@@ -262,25 +285,12 @@ export function PlacementAnalyzerContent() {
             frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed
               ? { 
                   ...frame, 
-                  individualSponsor: sponsor.id,
+                  individualSponsor: placementType.id, // Reusing this field for placement type
                   isSelected: true,
                   isDoubleSelected: false
                 }
               : frame
           ));
-          
-          handleSponsorSelect(sponsor);
-        } else {
-          setSelectedSponsor(sponsor);
-          
-          if (isSponsorDropdownKeyboardOpen) {
-            setIsSponsorDropdownKeyboardOpen(false);
-            if (sponsorSelectorRef.current) {
-              sponsorSelectorRef.current.closeDropdown();
-            }
-          }
-          
-          handleSponsorSelect(sponsor);
         }
       }
       return;
@@ -367,9 +377,9 @@ export function PlacementAnalyzerContent() {
           const selectedFrames = framesRef.current.filter(frame => frame.isSelected && !frame.isRejected && !frame.isConfirmed && !frame.isMarkedForRejection);
           
           if (selectedFrames.length > 0) {
-            setIsSponsorDropdownKeyboardOpen(true);
-            if (sponsorSelectorRef.current) {
-              sponsorSelectorRef.current.openDropdown();
+            setIsPlacementDropdownKeyboardOpen(true);
+            if (placementSelectorRef.current) {
+              placementSelectorRef.current.openDropdown();
             }
           }
         }
@@ -419,24 +429,24 @@ export function PlacementAnalyzerContent() {
             return;
           }
 
-          const framesWithIndividualSponsors = selectedFrames.filter(frame => frame.individualSponsor);
-          const framesNeedingGlobalSponsor = selectedFrames.filter(frame => !frame.individualSponsor);
+          const framesWithIndividualPlacements = selectedFrames.filter(frame => frame.individualSponsor);
+          const framesNeedingGlobalPlacement = selectedFrames.filter(frame => !frame.individualSponsor);
           
-          if (framesNeedingGlobalSponsor.length > 0 && !selectedSponsor) {
+          if (framesNeedingGlobalPlacement.length > 0 && !selectedPlacement) {
             return;
           }
 
           setFrames(prev => prev.map(frame => {
             if ((frame.isSelected || frame.isDoubleSelected) && !frame.isRejected && !frame.isConfirmed && !frame.isMarkedForRejection) {
-              const sponsorToUse = frame.individualSponsor || (selectedSponsor?.id);
-              if (sponsorToUse) {
+              const placementToUse = frame.individualSponsor || (selectedPlacement?.displayName);
+              if (placementToUse) {
                 return {
                   ...frame, 
                   isConfirmed: true, 
                   isSelected: false,
                   isDoubleSelected: false,
                   individualSponsor: undefined,
-                  sponsorAnnotations: [...new Set([...frame.sponsorAnnotations, sponsorToUse])]
+                  sponsorAnnotations: [...new Set([...frame.sponsorAnnotations, placementToUse])]
                 };
               }
             }
@@ -459,19 +469,19 @@ export function PlacementAnalyzerContent() {
             setFocusedFrameId(null);
           }
           
-          const confirmedCount = selectedFrames.filter(frame => frame.individualSponsor || selectedSponsor).length;
+          const confirmedCount = selectedFrames.filter(frame => frame.individualSponsor || selectedPlacement).length;
           const rejectedCount = markedForRejectionFrames.length;
-          const individualAssignments = framesWithIndividualSponsors.length;
+          const individualAssignments = framesWithIndividualPlacements.length;
           
           if (confirmedCount > 0 && rejectedCount > 0) {
             const message = individualAssignments > 0 
               ? `${confirmedCount} frames confirmed (${individualAssignments} individual assignments), ${rejectedCount} frames rejected.`
-              : `${confirmedCount} frames confirmed with ${selectedSponsor?.name}, ${rejectedCount} frames rejected.`;
+              : `${confirmedCount} frames confirmed with ${selectedPlacement?.displayName}, ${rejectedCount} frames rejected.`;
             showCompletionToast(`✅ Batch confirmed!`, message);
           } else if (confirmedCount > 0) {
             const message = individualAssignments > 0
               ? `${confirmedCount} frames confirmed (${individualAssignments} individual assignments).`
-              : `Frames annotated with ${selectedSponsor?.name}.`;
+              : `Frames annotated with ${selectedPlacement?.displayName}.`;
             showCompletionToast(`✅ ${confirmedCount} frames confirmed!`, message);
           } else if (rejectedCount > 0) {
             showCompletionToast(`✅ ${rejectedCount} frames rejected!`, 'Marked frames have been finalized as rejected.');
@@ -481,10 +491,10 @@ export function PlacementAnalyzerContent() {
         
       case 'escape':
         e.preventDefault();
-        if (isSponsorDropdownKeyboardOpen) {
-          setIsSponsorDropdownKeyboardOpen(false);
-          if (sponsorSelectorRef.current) {
-            sponsorSelectorRef.current.closeDropdown();
+        if (isPlacementDropdownKeyboardOpen) {
+          setIsPlacementDropdownKeyboardOpen(false);
+          if (placementSelectorRef.current) {
+            placementSelectorRef.current.closeDropdown();
           }
         } else {
           const doubleSelectedFrames = framesRef.current.filter(frame => frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed);
@@ -507,7 +517,7 @@ export function PlacementAnalyzerContent() {
       default:
         return;
     }
-  }, [showSettingsModal, selectedSponsor, focusedFrameId, isSponsorDropdownKeyboardOpen, showVideoDrawer, autoPopulatedSponsors, keyboardHelpers, handleSelectAll, handleDeselectAll, handleKeyboardFrameSelect, showCompletionToast]);
+  }, [showSettingsModal, selectedPlacement, focusedFrameId, isPlacementDropdownKeyboardOpen, showVideoDrawer, autoPopulatedPlacementTypes, keyboardHelpers, handleSelectAll, handleDeselectAll, handleKeyboardFrameSelect, showCompletionToast]);
 
   // Row completion effect
   useEffect(() => {
@@ -590,13 +600,13 @@ export function PlacementAnalyzerContent() {
         setValidatedBatches(prev => prev + 1);
         setHasConfirmed(false);
         
-        setSelectedSponsor(null);
+        setSelectedPlacement(null);
         setCollapsedRows(new Set());
         setFocusedFrameId(null);
         previouslyCompletedRowsRef.current = new Set();
         lastActionToastRef.current = null;
         setRowTransitions(new Map());
-        setIsSponsorDropdownKeyboardOpen(false);
+        setIsPlacementDropdownKeyboardOpen(false);
       }, 1500);
     }
   }, [allFramesProcessed, frames.length, hasConfirmed, currentBatch, pageSettings.defaultZoomLevel, frames]);
@@ -784,24 +794,24 @@ export function PlacementAnalyzerContent() {
       return;
     }
 
-    const framesWithIndividualSponsors = selectedFrames.filter(frame => frame.individualSponsor);
-    const framesNeedingGlobalSponsor = selectedFrames.filter(frame => !frame.individualSponsor);
+    const framesWithIndividualPlacements = selectedFrames.filter(frame => frame.individualSponsor);
+    const framesNeedingGlobalPlacement = selectedFrames.filter(frame => !frame.individualSponsor);
     
-    if (framesNeedingGlobalSponsor.length > 0 && !selectedSponsor) {
+    if (framesNeedingGlobalPlacement.length > 0 && !selectedPlacement) {
       return;
     }
 
     setFrames(prev => prev.map(frame => {
       if ((frame.isSelected || frame.isDoubleSelected) && !frame.isRejected && !frame.isConfirmed && !frame.isMarkedForRejection) {
-        const sponsorToUse = frame.individualSponsor || (selectedSponsor?.id);
-        if (sponsorToUse) {
+        const placementToUse = frame.individualSponsor || (selectedPlacement?.displayName);
+        if (placementToUse) {
           return {
             ...frame, 
             isConfirmed: true, 
             isSelected: false,
             isDoubleSelected: false,
             individualSponsor: undefined,
-            sponsorAnnotations: [...new Set([...frame.sponsorAnnotations, sponsorToUse])]
+            sponsorAnnotations: [...new Set([...frame.sponsorAnnotations, placementToUse])]
           };
         }
       }
@@ -824,19 +834,19 @@ export function PlacementAnalyzerContent() {
       setFocusedFrameId(null);
     }
     
-    const confirmedCount = selectedFrames.filter(frame => frame.individualSponsor || selectedSponsor).length;
+    const confirmedCount = selectedFrames.filter(frame => frame.individualSponsor || selectedPlacement).length;
     const rejectedCount = markedForRejectionFrames.length;
-    const individualAssignments = framesWithIndividualSponsors.length;
+    const individualAssignments = framesWithIndividualPlacements.length;
     
     if (confirmedCount > 0 && rejectedCount > 0) {
       const message = individualAssignments > 0 
         ? `${confirmedCount} frames confirmed (${individualAssignments} individual assignments), ${rejectedCount} frames rejected.`
-        : `${confirmedCount} frames confirmed with ${selectedSponsor?.name}, ${rejectedCount} frames rejected.`;
+        : `${confirmedCount} frames confirmed with ${selectedPlacement?.displayName}, ${rejectedCount} frames rejected.`;
       showCompletionToast(`✅ Batch confirmed!`, message);
     } else if (confirmedCount > 0) {
       const message = individualAssignments > 0
         ? `${confirmedCount} frames confirmed (${individualAssignments} individual assignments).`
-        : `Frames annotated with ${selectedSponsor?.name}.`;
+        : `Frames annotated with ${selectedPlacement?.displayName}.`;
       showCompletionToast(`✅ ${confirmedCount} frames confirmed!`, message);
     } else if (rejectedCount > 0) {
       showCompletionToast(`✅ ${rejectedCount} frames rejected!`, 'Marked frames have been finalized as rejected.');
@@ -1087,60 +1097,6 @@ export function PlacementAnalyzerContent() {
     handleDragStart(e, action);
   }, [handleDragStart, showVideoDrawer]);
 
-  // Sponsor selection handlers
-  const handleSponsorSelect = (sponsor: Sponsor | null) => {
-    const doubleSelectedFrames = frames.filter(frame => frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed);
-    
-    if (doubleSelectedFrames.length > 0 && sponsor) {
-      setFrames(prev => prev.map(frame => 
-        frame.isDoubleSelected && !frame.isRejected && !frame.isConfirmed
-          ? { 
-              ...frame, 
-              individualSponsor: sponsor.id,
-              isSelected: true,
-              isDoubleSelected: false
-            }
-          : frame
-      ));
-    } else {
-      setSelectedSponsor(sponsor);
-    }
-    
-    if (isSponsorDropdownKeyboardOpen) {
-      setIsSponsorDropdownKeyboardOpen(false);
-    }
-    
-    if (sponsor) {
-      setAutoPopulatedSponsors(prev => {
-        const newList = [sponsor];
-        
-        prev.forEach(existingSponsor => {
-          if (existingSponsor.id !== sponsor.id && newList.length < 9) {
-            newList.push(existingSponsor);
-          }
-        });
-        
-        if (newList.length < 10) {
-          mockSponsors.forEach(availableSponsor => {
-            if (!newList.some(s => s.id === availableSponsor.id) && newList.length < 10) {
-              newList.push(availableSponsor);
-            }
-          });
-        }
-        
-        return newList.slice(0, 10);
-      });
-    }
-  };
-
-  const handleRecentSponsorSelect = (sponsor: Sponsor | null) => {
-    handleSponsorSelect(sponsor);
-  };
-
-  const handleSponsorDropdownClose = useCallback(() => {
-    setIsSponsorDropdownKeyboardOpen(false);
-  }, []);
-
   // Frame state calculations
   const unprocessedFrames = frames.filter(frame => !frame.isRejected && !frame.isConfirmed);
   const allUnprocessedFramesSelected = unprocessedFrames.length > 0 && unprocessedFrames.every(frame => frame.isSelected || frame.isDoubleSelected || frame.isMarkedForRejection);
@@ -1160,11 +1116,10 @@ export function PlacementAnalyzerContent() {
           onConfirm={handleConfirm}
           hasConfirmed={hasConfirmed}
           showCompletion={false}
-          availableSponsors={mockSponsors}
-          selectedSponsor={selectedSponsor}
-          recentlyUsedSponsors={autoPopulatedSponsors}
-          onSponsorSelect={handleSponsorSelect}
-          onRecentSponsorSelect={handleRecentSponsorSelect}
+          // Pass placement-specific props
+          selectedPlacement={selectedPlacement}
+          autoPopulatedPlacementTypes={autoPopulatedPlacementTypes}
+          onPlacementSelect={handlePlacementSelect}
           allFramesSelected={allUnprocessedFramesSelected}
           hasSelectableFrames={hasSelectableFrames}
           onSelectAll={handleSelectAll}
@@ -1172,10 +1127,10 @@ export function PlacementAnalyzerContent() {
           confirmedCount={confirmedCount}
           rejectedCount={rejectedCount}
           unprocessedCount={unprocessedCount}
-          sponsorSelectorRef={sponsorSelectorRef}
-          isSponsorDropdownKeyboardOpen={isSponsorDropdownKeyboardOpen}
-          onSponsorDropdownClose={handleSponsorDropdownClose}
-          framesWithIndividualSponsors={framesWithIndividualSponsors}
+          placementSelectorRef={placementSelectorRef}
+          isPlacementDropdownKeyboardOpen={isPlacementDropdownKeyboardOpen}
+          onPlacementDropdownClose={handlePlacementDropdownClose}
+          framesWithIndividualPlacements={framesWithIndividualPlacements}
           hasDoubleSelectedFrames={hasDoubleSelectedFrames}
           allFramesDoubleSelected={allUnprocessedFramesDoubleSelected}
           onOpenSettings={() => setShowSettingsModal(true)}
@@ -1212,7 +1167,7 @@ export function PlacementAnalyzerContent() {
           onFrameLeaveDrag={handleFrameLeaveDrag}
           showVideoDrawer={showVideoDrawer}
           onCloseVideoDrawer={() => setShowVideoDrawer(false)}
-          sponsors={mockSponsors}
+          sponsors={[]} // No sponsors for placement analyzer
           allFrames={frames}
         />
       </main>
