@@ -109,7 +109,28 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     const search = searchValue.toLowerCase();
     const results: Record<string, Array<{type: string, item: any, searchMatch: string}>> = {};
 
-    // Search leagues
+    // Search combinations first - this is what users primarily want
+    getAllRightsholderPlacementCombinations().forEach(combo => {
+      const matches = [
+        combo.rightsholder.league.toLowerCase().includes(search),
+        combo.rightsholder.teamName.toLowerCase().includes(search),
+        combo.rightsholder.city.toLowerCase().includes(search),
+        combo.placement.name.toLowerCase().includes(search),
+        combo.displayName.toLowerCase().includes(search)
+      ].some(Boolean);
+
+      if (matches) {
+        const league = combo.rightsholder.league;
+        if (!results[league]) results[league] = [];
+        results[league].push({
+          type: 'combination',
+          item: combo,
+          searchMatch: combo.displayName
+        });
+      }
+    });
+
+    // Search leagues (for quick filtering)
     const leagues = ['MLB', 'NBA', 'NFL', 'MLS'];
     leagues.forEach(league => {
       if (league.toLowerCase().includes(search)) {
@@ -118,25 +139,6 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
           type: 'league',
           item: league,
           searchMatch: league
-        });
-      }
-    });
-
-    // Search teams
-    rightsholders.forEach(rh => {
-      const matches = [
-        rh.name.toLowerCase().includes(search),
-        rh.teamName.toLowerCase().includes(search),
-        rh.city.toLowerCase().includes(search),
-        rh.league.toLowerCase().includes(search)
-      ].some(Boolean);
-
-      if (matches) {
-        if (!results['Teams']) results['Teams'] = [];
-        results['Teams'].push({
-          type: 'team',
-          item: rh,
-          searchMatch: rh.name
         });
       }
     });
@@ -223,6 +225,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     }
     
     // Let Command component handle all other keys (including arrow navigation and Enter)
+    // Don't prevent default for navigation keys
   };
 
       return (
@@ -274,7 +277,11 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
       </PopoverTrigger>
         
         <PopoverContent className="w-[280px] sm:w-[380px] p-0" align="start">
-          <Command className="w-full" onKeyDown={handleKeyDown}>
+          <Command 
+            className="w-full" 
+            filter={(value, search) => 1}
+            onKeyDown={handleKeyDown}
+          >
             <CommandInput 
               placeholder="Search leagues, teams, placements, or placement types..."
               value={searchValue}
@@ -292,7 +299,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
                     {items.map((result, index) => (
                       <CommandItem
                         key={`${category}-${index}`}
-                        value={result.searchMatch}
+                        value={`${category}-${result.searchMatch}-${index}`}
                         onSelect={() => {
                           if (result.type === 'combination') {
                             handleDirectPlacementSelect(result.item);
