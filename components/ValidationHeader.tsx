@@ -98,8 +98,8 @@ export function ValidationHeader({
   onOpenVideoDrawer,
 }: ValidationHeaderProps) {
   
-  // Determine which workflow to use
-  const isPlacementWorkflow = selectedPlacement !== undefined || autoPopulatedPlacementTypes !== undefined;
+  // Determine which workflow to use based on prop presence
+  const isPlacementWorkflow = onPlacementSelect !== undefined;
   const isSponsorWorkflow = !isPlacementWorkflow;
 
   const handleConfirm = () => {
@@ -162,7 +162,7 @@ export function ValidationHeader({
 
         {/* Workflow-specific section - Enhanced Display Below Main Header */}
         {((isSponsorWorkflow && recentlyUsedSponsors && recentlyUsedSponsors.length > 0) || 
-          (isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.length > 0)) && (
+          isPlacementWorkflow) && (
           <div className="border-t border-gray-100 bg-gray-50/80 px-6 py-3">
             <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Select All/Deselect All button - Responsive */}
