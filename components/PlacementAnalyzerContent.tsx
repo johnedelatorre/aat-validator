@@ -78,7 +78,7 @@ export function PlacementAnalyzerContent() {
 
   // Auto-detect and populate placement types (similar to sponsor auto-detection)
   useEffect(() => {
-    if (frames.length > 0 && !selectedPlacement) {
+    if (frames.length > 0 && autoPopulatedPlacementTypes.length === 0) {
       // Auto-populate with a default rightsholder-placement combination for demo
       // In real implementation, this would be based on frame analysis
       const defaultRightsholder = { id: 'ny-yankees', name: 'New York Yankees', league: 'MLB' as const, city: 'New York', teamName: 'Yankees' };
@@ -98,7 +98,7 @@ export function PlacementAnalyzerContent() {
         displayName: `${defaultRightsholder.name} - ${defaultPlacement}`
       });
     }
-  }, [frames, selectedPlacement]);
+  }, [frames, autoPopulatedPlacementTypes.length]);
 
   // When a placement is manually selected, update placement types
   useEffect(() => {
