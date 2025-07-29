@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { ChevronDown, Search, Target, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Badge } from './ui/badge';
-import { rightsholders, getPlacementsForRightsholder, type Rightsholder } from '../constants/placements';
+import { rightsholders, getPlacementsForRightsholder, getAllRightsholderPlacementCombinations, allPlacementTypes, basePlacements, type Rightsholder, type PlacementType } from '../constants/placements';
 
 export interface SelectedPlacement {
   rightsholder: Rightsholder;
@@ -32,7 +32,6 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
 }, ref) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [selectedRightsholder, setSelectedRightsholder] = useState<Rightsholder | null>(null);
 
   useImperativeHandle(ref, () => ({
     openDropdown: () => setOpen(true),
@@ -64,43 +63,124 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     }
   };
 
-  // Group rightsholders by league
-  const rightsholdersByLeague = rightsholders.reduce((acc, rh) => {
-    if (!acc[rh.league]) {
-      acc[rh.league] = [];
+
+
+  // Comprehensive search results
+  const searchResults = useMemo(() => {
+    if (!searchValue) {
+      // Show all rightsholder-placement combinations grouped by league
+      return getAllRightsholderPlacementCombinations().reduce((acc, combo) => {
+        const league = combo.rightsholder.league;
+        if (!acc[league]) acc[league] = [];
+        acc[league].push({
+          type: 'combination' as const,
+          item: combo,
+          searchMatch: combo.displayName
+        });
+        return acc;
+      }, {} as Record<string, Array<{type: 'combination', item: any, searchMatch: string}>>);
     }
-    acc[rh.league].push(rh);
-    return acc;
-  }, {} as Record<string, Rightsholder[]>);
 
-  // Get available placements for selected rightsholder
-  const availablePlacements = selectedRightsholder 
-    ? getPlacementsForRightsholder(selectedRightsholder.id).map(p => p.placement.name)
-    : [];
+    const search = searchValue.toLowerCase();
+    const results: Record<string, Array<{type: string, item: any, searchMatch: string}>> = {};
 
-  const handleRightsholderSelect = (rightsholder: Rightsholder) => {
-    setSelectedRightsholder(rightsholder);
-    setSearchValue('');
-  };
+    // Search leagues
+    const leagues = ['MLB', 'NBA', 'NFL', 'MLS'];
+    leagues.forEach(league => {
+      if (league.toLowerCase().includes(search)) {
+        if (!results['Leagues']) results['Leagues'] = [];
+        results['Leagues'].push({
+          type: 'league',
+          item: league,
+          searchMatch: league
+        });
+      }
+    });
 
-  const handlePlacementSelect = (placementName: string) => {
-    if (!selectedRightsholder) return;
+    // Search teams
+    rightsholders.forEach(rh => {
+      const matches = [
+        rh.name.toLowerCase().includes(search),
+        rh.teamName.toLowerCase().includes(search),
+        rh.city.toLowerCase().includes(search),
+        rh.league.toLowerCase().includes(search)
+      ].some(Boolean);
 
+      if (matches) {
+        if (!results['Teams']) results['Teams'] = [];
+        results['Teams'].push({
+          type: 'team',
+          item: rh,
+          searchMatch: rh.name
+        });
+      }
+    });
+
+    // Search placements
+    basePlacements.forEach(placement => {
+      if (placement.name.toLowerCase().includes(search)) {
+        if (!results['Placements']) results['Placements'] = [];
+        results['Placements'].push({
+          type: 'placement',
+          item: placement,
+          searchMatch: placement.name
+        });
+      }
+    });
+
+    // Search placement types
+    allPlacementTypes.forEach(placementType => {
+      if (placementType.name.toLowerCase().includes(search)) {
+        if (!results['Placement Types']) results['Placement Types'] = [];
+        results['Placement Types'].push({
+          type: 'placementType',
+          item: placementType,
+          searchMatch: placementType.name
+        });
+      }
+    });
+
+    // Search full combinations
+    getAllRightsholderPlacementCombinations().forEach(combo => {
+      if (combo.displayName.toLowerCase().includes(search)) {
+        if (!results['Combinations']) results['Combinations'] = [];
+        results['Combinations'].push({
+          type: 'combination',
+          item: combo,
+          searchMatch: combo.displayName
+        });
+      }
+    });
+
+    return results;
+  }, [searchValue]);
+
+  const handleDirectPlacementSelect = (combo: any) => {
     const placement: SelectedPlacement = {
-      rightsholder: selectedRightsholder,
-      placementName,
-      displayName: `${selectedRightsholder.name} - ${placementName}`
+      rightsholder: combo.rightsholder,
+      placementName: combo.placement.name,
+      displayName: combo.displayName
     };
 
     onPlacementSelect(placement);
     handleOpenChange(false);
-    setSelectedRightsholder(null);
     setSearchValue('');
   };
 
-  const handleBackToRightsholders = () => {
-    setSelectedRightsholder(null);
-    setSearchValue('');
+  const handleLeagueSelect = (league: string) => {
+    setSearchValue(league);
+  };
+
+  const handleTeamSelect = (team: Rightsholder) => {
+    setSearchValue(team.name);
+  };
+
+  const handlePlacementSelect = (placement: any) => {
+    setSearchValue(placement.name);
+  };
+
+  const handlePlacementTypeSelect = (placementType: PlacementType) => {
+    setSearchValue(placementType.name);
   };
 
   const handleClearSelection = (e: React.MouseEvent) => {
@@ -161,7 +241,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
             <div className="flex items-center border-b px-3">
               <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               <CommandInput
-                placeholder={selectedRightsholder ? "Search placements..." : "Search teams..."}
+                placeholder="Search leagues, teams, placements, or placement types..."
                 className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
                 value={searchValue}
                 onValueChange={setSearchValue}
@@ -169,97 +249,89 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
             </div>
             
             <CommandList className="max-h-80">
-              {!selectedRightsholder ? (
-                // Show rightsholders grouped by league
-                <>
-                  {Object.entries(rightsholdersByLeague).map(([league, leagueRightsholders]) => (
-                    <CommandGroup key={league} heading={league}>
-                      {leagueRightsholders
-                        .filter(rh => 
-                          searchValue === '' || 
-                          rh.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                          rh.teamName.toLowerCase().includes(searchValue.toLowerCase())
-                        )
-                        .map((rightsholder) => (
-                          <CommandItem
-                            key={rightsholder.id}
-                            value={rightsholder.name}
-                            onSelect={() => handleRightsholderSelect(rightsholder)}
-                            className="cursor-pointer"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <Badge variant="outline" className="text-xs">
-                                {rightsholder.league}
-                              </Badge>
-                              <div>
-                                <div className="font-medium">{rightsholder.teamName}</div>
-                                <div className="text-sm text-gray-500">{rightsholder.city}</div>
-                              </div>
-                            </div>
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                  ))}
-                  
-                  {Object.values(rightsholdersByLeague).flat()
-                    .filter(rh => 
-                      searchValue !== '' && (
-                        rh.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                        rh.teamName.toLowerCase().includes(searchValue.toLowerCase())
-                      )
-                    ).length === 0 && searchValue !== '' && (
-                    <CommandEmpty>No teams found.</CommandEmpty>
-                  )}
-                </>
+              {Object.keys(searchResults).length === 0 && searchValue !== '' ? (
+                <CommandEmpty>No results found. Try searching for leagues (NBA), teams (Knicks), placements (Uniform), or placement types (Jersey).</CommandEmpty>
               ) : (
-                // Show placements for selected rightsholder
-                <>
-                  <div className="px-3 py-2 border-b bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">{selectedRightsholder.league}</Badge>
-                        <span className="font-medium">{selectedRightsholder.name}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleBackToRightsholders}
-                        className="text-xs"
+                Object.entries(searchResults).map(([category, items]) => (
+                  <CommandGroup key={category} heading={category}>
+                    {items.map((result, index) => (
+                      <CommandItem
+                        key={`${category}-${index}`}
+                        value={result.searchMatch}
+                        onSelect={() => {
+                          if (result.type === 'combination') {
+                            handleDirectPlacementSelect(result.item);
+                          } else if (result.type === 'league') {
+                            handleLeagueSelect(result.item);
+                          } else if (result.type === 'team') {
+                            handleTeamSelect(result.item);
+                          } else if (result.type === 'placement') {
+                            handlePlacementSelect(result.item);
+                          } else if (result.type === 'placementType') {
+                            handlePlacementTypeSelect(result.item);
+                          }
+                        }}
+                        className="cursor-pointer"
                       >
-                        ← Back
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <CommandGroup heading="Available Placements">
-                    {availablePlacements
-                      .filter(placement => 
-                        searchValue === '' || 
-                        placement.toLowerCase().includes(searchValue.toLowerCase())
-                      )
-                      .map((placementName) => (
-                        <CommandItem
-                          key={placementName}
-                          value={placementName}
-                          onSelect={() => handlePlacementSelect(placementName)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <Target className="h-4 w-4 text-blue-600" />
-                            <span>{placementName}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
+                        <div className="flex items-center space-x-3 w-full">
+                          {result.type === 'combination' && (
+                            <>
+                              <Target className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="font-medium">{result.item.displayName}</div>
+                                <div className="text-xs text-gray-500">Select this combination</div>
+                              </div>
+                            </>
+                          )}
+                          
+                          {result.type === 'league' && (
+                            <>
+                              <Badge variant="outline" className="text-xs">
+                                {result.item}
+                              </Badge>
+                              <div className="flex-1">
+                                <div className="font-medium">{result.item} Teams</div>
+                                <div className="text-xs text-gray-500">Filter by league</div>
+                              </div>
+                            </>
+                          )}
+                          
+                          {result.type === 'team' && (
+                            <>
+                              <Badge variant="outline" className="text-xs">
+                                {result.item.league}
+                              </Badge>
+                              <div className="flex-1">
+                                <div className="font-medium">{result.item.teamName}</div>
+                                <div className="text-xs text-gray-500">{result.item.city} - Filter by team</div>
+                              </div>
+                            </>
+                          )}
+                          
+                          {result.type === 'placement' && (
+                            <>
+                              <Target className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="font-medium">{result.item.name}</div>
+                                <div className="text-xs text-gray-500">Filter by placement type</div>
+                              </div>
+                            </>
+                          )}
+                          
+                          {result.type === 'placementType' && (
+                            <>
+                              <Target className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="font-medium">{result.item.name}</div>
+                                <div className="text-xs text-gray-500">Filter by placement element</div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
-                  
-                  {availablePlacements
-                    .filter(placement => 
-                      searchValue !== '' && 
-                      placement.toLowerCase().includes(searchValue.toLowerCase())
-                    ).length === 0 && searchValue !== '' && (
-                    <CommandEmpty>No placements found.</CommandEmpty>
-                  )}
-                </>
+                ))
               )}
             </CommandList>
           </Command>
