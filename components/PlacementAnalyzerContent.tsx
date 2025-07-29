@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { ValidationHeader } from './ValidationHeader';
 import { FrameGrid } from './FrameGrid';
 import { PageSettingsModal } from './PageSettingsModal';
@@ -13,7 +13,12 @@ interface PlacementAnalyzerContentProps {
   isActive: boolean;
 }
 
-export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentProps) {
+export interface PlacementAnalyzerContentRef {
+  closeDropdown: () => void;
+}
+
+export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, PlacementAnalyzerContentProps>(
+  ({ isActive }, ref) => {
   // Page settings state
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     framesPerRow: 5,
@@ -673,6 +678,15 @@ export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentP
     workflowShortcutsRef.current = handleWorkflowShortcuts;
   }, [handleWorkflowShortcuts]);
 
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    closeDropdown: () => {
+      if (placementSelectorRef.current) {
+        placementSelectorRef.current.closeDropdown();
+      }
+    }
+  }));
+
   // Settings save handler
   const handleSettingsSave = (newSettings: PageSettings) => {
     const oldSettings = pageSettings;
@@ -1208,4 +1222,4 @@ export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentP
       />
     </div>
   );
-} 
+}); 

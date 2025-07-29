@@ -1,11 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AnalysisHeader } from './components/AnalysisHeader';
-import { SponsorAnalyzerContent } from './components/SponsorAnalyzerContent';
-import { PlacementAnalyzerContent } from './components/PlacementAnalyzerContent';
+import { SponsorAnalyzerContent, SponsorAnalyzerContentRef } from './components/SponsorAnalyzerContent';
+import { PlacementAnalyzerContent, PlacementAnalyzerContentRef } from './components/PlacementAnalyzerContent';
 import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('sponsor-analyzer');
+  const sponsorAnalyzerRef = useRef<SponsorAnalyzerContentRef>(null);
+  const placementAnalyzerRef = useRef<PlacementAnalyzerContentRef>(null);
+
+  const handleTabChange = (newTab: string) => {
+    // Close dropdowns in the current tab before switching
+    if (activeTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current) {
+      sponsorAnalyzerRef.current.closeDropdown();
+    } else if (activeTab === 'placement-analyzer' && placementAnalyzerRef.current) {
+      placementAnalyzerRef.current.closeDropdown();
+    }
+    
+    setActiveTab(newTab);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -16,7 +29,7 @@ export default function App() {
         <div className="px-6">
           <div className="flex space-x-8">
             <button
-              onClick={() => setActiveTab('sponsor-analyzer')}
+              onClick={() => handleTabChange('sponsor-analyzer')}
               className={`py-4 px-2 text-sm font-medium transition-all duration-200 ease-in-out relative ${
                 activeTab === 'sponsor-analyzer'
                   ? 'text-blue-600 border-b-2 border-blue-600'
@@ -32,7 +45,7 @@ export default function App() {
             </button>
             
             <button
-              onClick={() => setActiveTab('placement-analyzer')}
+              onClick={() => handleTabChange('placement-analyzer')}
               className={`py-4 px-2 text-sm font-medium transition-all duration-200 ease-in-out relative ${
                 activeTab === 'placement-analyzer'
                   ? 'text-blue-600 border-b-2 border-blue-600'
@@ -59,7 +72,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <SponsorAnalyzerContent isActive={activeTab === 'sponsor-analyzer'} />
+            <SponsorAnalyzerContent ref={sponsorAnalyzerRef} isActive={activeTab === 'sponsor-analyzer'} />
           </div>
         </div>
 
@@ -70,7 +83,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <PlacementAnalyzerContent isActive={activeTab === 'placement-analyzer'} />
+            <PlacementAnalyzerContent ref={placementAnalyzerRef} isActive={activeTab === 'placement-analyzer'} />
           </div>
         </div>
       </div>

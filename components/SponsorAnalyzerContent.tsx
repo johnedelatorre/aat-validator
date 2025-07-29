@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { ValidationHeader } from './ValidationHeader';
 import { FrameGrid } from './FrameGrid';
 import { PageSettingsModal } from './PageSettingsModal';
@@ -12,7 +12,12 @@ interface SponsorAnalyzerContentProps {
   isActive: boolean;
 }
 
-export function SponsorAnalyzerContent({ isActive }: SponsorAnalyzerContentProps) {
+export interface SponsorAnalyzerContentRef {
+  closeDropdown: () => void;
+}
+
+export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, SponsorAnalyzerContentProps>(
+  ({ isActive }, ref) => {
   // Page settings state
   const [pageSettings, setPageSettings] = useState<PageSettings>({
     framesPerRow: 5,
@@ -642,6 +647,15 @@ export function SponsorAnalyzerContent({ isActive }: SponsorAnalyzerContentProps
     workflowShortcutsRef.current = handleWorkflowShortcuts;
   }, [handleWorkflowShortcuts]);
 
+  // Expose methods to parent component
+  useImperativeHandle(ref, () => ({
+    closeDropdown: () => {
+      if (sponsorSelectorRef.current) {
+        sponsorSelectorRef.current.closeDropdown();
+      }
+    }
+  }));
+
   // Settings save handler
   const handleSettingsSave = (newSettings: PageSettings) => {
     const oldSettings = pageSettings;
@@ -1232,4 +1246,4 @@ export function SponsorAnalyzerContent({ isActive }: SponsorAnalyzerContentProps
       />
     </div>
   );
-} 
+}); 
