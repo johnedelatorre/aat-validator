@@ -218,7 +218,7 @@ export function ValidationHeader({
               </div>
               
               {/* Quick select buttons container with responsive sizing and proper space management */}
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2 md:gap-3 min-w-0 flex-1">
                 {isSponsorWorkflow && recentlyUsedSponsors && recentlyUsedSponsors.slice(0, 10).map((sponsor, index) => (
                   <button
                     key={sponsor.id}
@@ -243,6 +243,40 @@ export function ValidationHeader({
                   </button>
                 ))}
                 
+                {/* Placement Type Buttons - Inline with sponsor buttons, wrap to multiple lines */}
+                {isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.map((placementType, index) => (
+                  <button
+                    key={placementType.id}
+                    onClick={() => {
+                      // Handle placement type selection on click by simulating keyboard event
+                      if (index <= 9) { // Only for buttons 0-9 that have keyboard shortcuts
+                        const syntheticEvent = new KeyboardEvent('keydown', {
+                          key: index.toString(),
+                          bubbles: true,
+                          cancelable: true
+                        });
+                        document.dispatchEvent(syntheticEvent);
+                      }
+                    }}
+                    disabled={hasConfirmed}
+                    className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
+                    title={index <= 9 ? `${placementType.name} - Press ${index}` : `${placementType.name} - Click to select`}
+                    style={{ minWidth: '60px' }}
+                  >
+                    {/* Keyboard Shortcut Number */}
+                    <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                      {index}
+                    </div>
+                    
+                    {/* Placement Type Name with responsive sizing */}
+                    <span 
+                      className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-900 transition-colors whitespace-nowrap truncate max-w-[40px] sm:max-w-[80px] md:max-w-none"
+                      style={{ minWidth: '20px', fontSize: 'max(10px, 0.75rem)' }}
+                    >
+                      {placementType.name}
+                    </span>
+                  </button>
+                ))}
 
               </div>
 
@@ -314,91 +348,7 @@ export function ValidationHeader({
           </div>
         )}
 
-        {/* Placement Type Buttons Section - Show in 2 rows for placement workflow */}
-        {isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.length > 0 && (
-          <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-3">
-            <div className="flex items-center space-x-4 mb-2">
-              <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Placement Types</span>
-              <span className="text-xs text-gray-500">
-                {selectedPlacement?.displayName || 'Select placement above'}
-              </span>
-            </div>
-            
-            {/* Two rows of placement type buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              {/* First row - buttons 0-5 or first half */}
-              <div className="flex flex-wrap gap-1 sm:gap-2">
-                {autoPopulatedPlacementTypes.slice(0, Math.ceil(autoPopulatedPlacementTypes.length / 2)).map((placementType, index) => (
-                  <button
-                    key={placementType.id}
-                    onClick={() => {
-                      // Handle placement type selection on click by simulating keyboard event
-                      if (index <= 9) { // Only for buttons 0-9 that have keyboard shortcuts
-                        const syntheticEvent = new KeyboardEvent('keydown', {
-                          key: index.toString(),
-                          bubbles: true,
-                          cancelable: true
-                        });
-                        document.dispatchEvent(syntheticEvent);
-                      }
-                    }}
-                    disabled={hasConfirmed}
-                    className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0"
-                    title={index <= 9 ? `${placementType.name} - Press ${index}` : `${placementType.name} - Click to select`}
-                    style={{ minWidth: '80px' }}
-                  >
-                    {/* Keyboard Shortcut Number */}
-                    <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                      {index}
-                    </div>
-                    
-                    {/* Placement Type Name */}
-                    <span className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-900 transition-colors whitespace-nowrap">
-                      {placementType.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              
-              {/* Second row - remaining buttons */}
-              <div className="flex flex-wrap gap-1 sm:gap-2">
-                {autoPopulatedPlacementTypes.slice(Math.ceil(autoPopulatedPlacementTypes.length / 2)).map((placementType, idx) => {
-                  const index = Math.ceil(autoPopulatedPlacementTypes.length / 2) + idx;
-                  return (
-                    <button
-                      key={placementType.id}
-                      onClick={() => {
-                        // Handle placement type selection on click by simulating keyboard event
-                        if (index <= 9) { // Only for buttons 0-9 that have keyboard shortcuts
-                          const syntheticEvent = new KeyboardEvent('keydown', {
-                            key: index.toString(),
-                            bubbles: true,
-                            cancelable: true
-                          });
-                          document.dispatchEvent(syntheticEvent);
-                        }
-                      }}
-                      disabled={hasConfirmed}
-                      className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0"
-                      title={index <= 9 ? `${placementType.name} - Press ${index}` : `${placementType.name} - Click to select`}
-                      style={{ minWidth: '80px' }}
-                    >
-                      {/* Keyboard Shortcut Number */}
-                      <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                        {index}
-                      </div>
-                      
-                      {/* Placement Type Name */}
-                      <span className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-900 transition-colors whitespace-nowrap">
-                        {placementType.name}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
+
       </div>
     </header>
   );
