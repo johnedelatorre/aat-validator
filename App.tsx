@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AnalysisHeader } from './components/AnalysisHeader';
-import { SponsorAnalyzerContent } from './components/SponsorAnalyzerContent';
-import { PlacementAnalyzerContent } from './components/PlacementAnalyzerContent';
+import { SponsorAnalyzerContent, SponsorAnalyzerContentRef } from './components/SponsorAnalyzerContent';
+import { PlacementAnalyzerContent, PlacementAnalyzerContentRef } from './components/PlacementAnalyzerContent';
 import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('sponsor-analyzer');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const sponsorAnalyzerRef = useRef<SponsorAnalyzerContentRef>(null);
+  const placementAnalyzerRef = useRef<PlacementAnalyzerContentRef>(null);
 
   const handleTabChange = (newTab: string) => {
     // Don't switch if already on the target tab or currently transitioning
@@ -14,13 +16,28 @@ export default function App() {
     
     setIsTransitioning(true);
     
-    // Simply switch tabs - let dropdowns fade naturally with tab content
-    setActiveTab(newTab);
+    // Check if any dropdown is open in current tab and close it BEFORE switching
+    let hasOpenDropdown = false;
     
-    // Re-enable buttons after tab transition completes
+    if (activeTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current?.isDropdownOpen()) {
+      sponsorAnalyzerRef.current.closeDropdown();
+      hasOpenDropdown = true;
+    } else if (activeTab === 'placement-analyzer' && placementAnalyzerRef.current?.isDropdownOpen()) {
+      placementAnalyzerRef.current.closeDropdown();
+      hasOpenDropdown = true;
+    }
+    
+    // If dropdown was open, delay tab switch to let it close cleanly
+    const switchDelay = hasOpenDropdown ? 100 : 0;
+    
     setTimeout(() => {
-      setIsTransitioning(false);
-    }, 350); // Slightly longer than the 300ms opacity transition
+      setActiveTab(newTab);
+      
+      // Re-enable buttons after tab transition completes
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 350);
+    }, switchDelay);
   };
 
   return (
@@ -81,7 +98,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <SponsorAnalyzerContent isActive={activeTab === 'sponsor-analyzer'} />
+            <SponsorAnalyzerContent ref={sponsorAnalyzerRef} isActive={activeTab === 'sponsor-analyzer'} />
           </div>
         </div>
 
@@ -92,7 +109,7 @@ export default function App() {
           }`}
         >
           <div className="h-full overflow-auto">
-            <PlacementAnalyzerContent isActive={activeTab === 'placement-analyzer'} />
+            <PlacementAnalyzerContent ref={placementAnalyzerRef} isActive={activeTab === 'placement-analyzer'} />
           </div>
         </div>
       </div>

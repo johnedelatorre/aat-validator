@@ -15,6 +15,7 @@ interface PlacementAnalyzerContentProps {
 
 export interface PlacementAnalyzerContentRef {
   closeDropdown: () => void;
+  isDropdownOpen: () => boolean;
 }
 
 export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, PlacementAnalyzerContentProps>(
@@ -641,16 +642,7 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
     }
   }, [allFramesProcessed, frames.length, hasConfirmed, currentBatch, pageSettings.defaultZoomLevel, frames]);
 
-  // Close dropdown naturally when tab becomes inactive
-  useEffect(() => {
-    if (!isActive && placementSelectorRef.current) {
-      // Natural fade-out when switching away from this tab
-      setTimeout(() => {
-        setIsPlacementDropdownKeyboardOpen(false);
-        placementSelectorRef.current?.closeDropdown();
-      }, 50); // Small delay for smooth transition
-    }
-  }, [isActive]);
+
 
   // Keyboard event listeners
   useEffect(() => {
@@ -695,6 +687,9 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
       if (placementSelectorRef.current) {
         placementSelectorRef.current.closeDropdown();
       }
+    },
+    isDropdownOpen: () => {
+      return isPlacementDropdownKeyboardOpen;
     }
   }));
 

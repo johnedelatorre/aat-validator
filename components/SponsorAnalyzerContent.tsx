@@ -14,6 +14,7 @@ interface SponsorAnalyzerContentProps {
 
 export interface SponsorAnalyzerContentRef {
   closeDropdown: () => void;
+  isDropdownOpen: () => boolean;
 }
 
 export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, SponsorAnalyzerContentProps>(
@@ -610,16 +611,7 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
     }
   }, [allFramesProcessed, frames.length, hasConfirmed, currentBatch, pageSettings.defaultZoomLevel, frames]);
 
-  // Close dropdown naturally when tab becomes inactive
-  useEffect(() => {
-    if (!isActive && sponsorSelectorRef.current) {
-      // Natural fade-out when switching away from this tab
-      setTimeout(() => {
-        setIsSponsorDropdownKeyboardOpen(false);
-        sponsorSelectorRef.current?.closeDropdown();
-      }, 50); // Small delay for smooth transition
-    }
-  }, [isActive]);
+
 
   // Keyboard event listeners
   useEffect(() => {
@@ -664,6 +656,9 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
       if (sponsorSelectorRef.current) {
         sponsorSelectorRef.current.closeDropdown();
       }
+    },
+    isDropdownOpen: () => {
+      return isSponsorDropdownKeyboardOpen;
     }
   }));
 
