@@ -213,6 +213,18 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     onPlacementSelect(null);
   };
 
+  // Handle keyboard shortcuts and navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle Escape key to close dropdown
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+      return;
+    }
+    
+    // Let Command component handle all other keys (including arrow navigation and Enter)
+  };
+
       return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -262,7 +274,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
       </PopoverTrigger>
         
         <PopoverContent className="w-[280px] sm:w-[380px] p-0" align="start">
-          <Command className="w-full" shouldFilter={false}>
+          <Command className="w-full" onKeyDown={handleKeyDown}>
             <CommandInput 
               placeholder="Search leagues, teams, placements, or placement types..."
               value={searchValue}
