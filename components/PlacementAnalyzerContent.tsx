@@ -76,16 +76,38 @@ export function PlacementAnalyzerContent() {
     return rowFrames.length > 0 && rowFrames.every(frame => isFrameProcessed(frame));
   }, [isFrameProcessed]);
 
-  // Auto-populate placement types when a placement is selected
+  // Auto-detect and populate placement types (similar to sponsor auto-detection)
+  useEffect(() => {
+    if (frames.length > 0 && autoPopulatedPlacementTypes.length === 0) {
+      // Auto-populate with a default rightsholder-placement combination for demo
+      // In real implementation, this would be based on frame analysis
+      const defaultRightsholder = { id: 'ny-yankees', name: 'New York Yankees', league: 'MLB' as const, city: 'New York', teamName: 'Yankees' };
+      const defaultPlacement = 'Uniform';
+      
+      const defaultPlacementTypes = getPlacementTypesForRightsholderPlacement(
+        defaultRightsholder.name,
+        defaultPlacement
+      );
+      
+      setAutoPopulatedPlacementTypes(defaultPlacementTypes); // Show all placement types, not limited to 10
+      
+      // Auto-select the default placement
+      setSelectedPlacement({
+        rightsholder: defaultRightsholder,
+        placementName: defaultPlacement,
+        displayName: `${defaultRightsholder.name} - ${defaultPlacement}`
+      });
+    }
+  }, [frames, autoPopulatedPlacementTypes.length]);
+
+  // When a placement is manually selected, update placement types
   useEffect(() => {
     if (selectedPlacement) {
       const placementTypes = getPlacementTypesForRightsholderPlacement(
         selectedPlacement.rightsholder.name,
         selectedPlacement.placementName
       );
-      setAutoPopulatedPlacementTypes(placementTypes.slice(0, 10)); // Limit to 10 for keyboard shortcuts
-    } else {
-      setAutoPopulatedPlacementTypes([]);
+      setAutoPopulatedPlacementTypes(placementTypes); // Show all placement types
     }
   }, [selectedPlacement]);
 
@@ -269,7 +291,7 @@ export function PlacementAnalyzerContent() {
       return;
     }
 
-    // Number keys 0-9 for placement type selection
+    // Number keys 0-9 for placement type selection (first 10 placement types)
     if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
       e.preventDefault();
       const numberPressed = parseInt(e.key);
@@ -291,6 +313,8 @@ export function PlacementAnalyzerContent() {
                 }
               : frame
           ));
+          
+          showCompletionToast(`✅ Applied ${placementType.name}!`, `Assigned "${placementType.name}" to ${doubleSelectedFrames.length} frames.`);
         }
       }
       return;

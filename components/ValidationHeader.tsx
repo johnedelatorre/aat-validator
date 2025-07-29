@@ -212,7 +212,7 @@ export function ValidationHeader({
                     <Info className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 hover:text-gray-600 cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Press 0-9 on the keyboard to select {isPlacementWorkflow ? 'placement types' : 'sponsors'}</p>
+                    <p>Press 0-9 on the keyboard to select {isPlacementWorkflow ? 'placement types (first 10)' : 'sponsors'}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -243,33 +243,49 @@ export function ValidationHeader({
                   </button>
                 ))}
                 
-                {isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.slice(0, 10).map((placementType, index) => (
-                  <button
-                    key={placementType.id}
-                    onClick={() => {
-                      // Placement type selection is handled by keyboard shortcuts in the main component
-                      // This button is mainly for display purposes
-                    }}
-                    disabled={hasConfirmed}
-                    className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
-                    title={`${placementType.name} - Press ${index}`}
-                    style={{ minWidth: '60px' }}
-                  >
-                    {/* Keyboard Shortcut Number */}
-                    <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-purple-100 text-purple-600 text-xs font-bold flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                      {index}
-                    </div>
-                    
-                    {/* Placement Type Name with responsive sizing */}
-                    <span 
-                      className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-purple-900 transition-colors whitespace-nowrap truncate max-w-[40px] sm:max-w-[80px] md:max-w-none"
-                      style={{ minWidth: '20px', fontSize: 'max(10px, 0.75rem)' }}
-                    >
-                      {placementType.name}
-                    </span>
-                  </button>
-                ))}
+
               </div>
+
+              {/* Placement Type Buttons - Allow multiple rows for placement workflow */}
+              {isPlacementWorkflow && autoPopulatedPlacementTypes && autoPopulatedPlacementTypes.length > 0 && (
+                <div className="w-full">
+                  <div className="flex flex-wrap gap-1 sm:gap-2 md:gap-3 justify-start">
+                    {autoPopulatedPlacementTypes.map((placementType, index) => (
+                      <button
+                        key={placementType.id}
+                        onClick={() => {
+                          // Handle placement type selection on click by simulating keyboard event
+                          if (index <= 9) { // Only for buttons 0-9 that have keyboard shortcuts
+                            const syntheticEvent = new KeyboardEvent('keydown', {
+                              key: index.toString(),
+                              bubbles: true,
+                              cancelable: true
+                            });
+                            document.dispatchEvent(syntheticEvent);
+                          }
+                        }}
+                        disabled={hasConfirmed}
+                        className="group flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md flex-shrink-0 min-w-0"
+                        title={index <= 9 ? `${placementType.name} - Press ${index}` : `${placementType.name} - Click to select`}
+                        style={{ minWidth: '60px' }}
+                      >
+                        {/* Keyboard Shortcut Number */}
+                        <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                          {index}
+                        </div>
+                        
+                        {/* Placement Type Name with responsive sizing */}
+                        <span 
+                          className="text-xs sm:text-sm font-medium text-gray-900 group-hover:text-blue-900 transition-colors whitespace-nowrap truncate max-w-[40px] sm:max-w-[80px] md:max-w-none"
+                          style={{ minWidth: '20px', fontSize: 'max(10px, 0.75rem)' }}
+                        >
+                          {placementType.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons and Counters moved to right side */}
               <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0 ml-2 sm:ml-4 lg:ml-6">
