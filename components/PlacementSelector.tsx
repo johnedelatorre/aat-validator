@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { ChevronDown, Search, Target } from 'lucide-react';
+import { ChevronDown, Search, Target, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
@@ -41,18 +41,28 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
 
   // Handle keyboard mode - open dropdown when 's' key is pressed
   useEffect(() => {
-    if (isKeyboardOpen) {
+    // Only sync when there's a meaningful state change
+    if (isKeyboardOpen && !open) {
+      // Keyboard wants to open dropdown and it's currently closed
       setOpen(true);
     }
-  }, [isKeyboardOpen]);
-
-  // Close dropdown when keyboard mode is disabled
-  useEffect(() => {
-    if (!isKeyboardOpen && open) {
-      // Allow manual closing but don't auto-close on keyboard mode change
-      // Only close if explicitly requested
-    }
+    // Don't automatically close when isKeyboardOpen becomes false
+    // This prevents infinite loops. Let the dropdown close naturally
+    // through user interaction or explicit close calls.
   }, [isKeyboardOpen, open]);
+
+  // Handle dropdown open/close changes
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    
+    // Only notify parent when dropdown is actually closing AND it was keyboard-opened
+    if (!newOpen && isKeyboardOpen && onDropdownClose) {
+      // Use setTimeout to break potential synchronous update loops
+      setTimeout(() => {
+        onDropdownClose();
+      }, 0);
+    }
+  };
 
   // Group rightsholders by league
   const rightsholdersByLeague = rightsholders.reduce((acc, rh) => {
@@ -65,7 +75,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
 
   // Get available placements for selected rightsholder
   const availablePlacements = selectedRightsholder 
-    ? getPlacementsForRightsholder(selectedRightsholder.name)
+    ? getPlacementsForRightsholder(selectedRightsholder.id).map(p => p.placement.name)
     : [];
 
   const handleRightsholderSelect = (rightsholder: Rightsholder) => {
@@ -83,13 +93,9 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     };
 
     onPlacementSelect(placement);
-    setOpen(false);
+    handleOpenChange(false);
     setSelectedRightsholder(null);
     setSearchValue('');
-    
-    if (onDropdownClose) {
-      onDropdownClose();
-    }
   };
 
   const handleBackToRightsholders = () => {
@@ -97,36 +103,58 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     setSearchValue('');
   };
 
-  const handleClearSelection = () => {
+  const handleClearSelection = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onPlacementSelect(null);
   };
 
-  return (
-    <div className="flex items-center space-x-2">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-72 justify-between bg-white border-blue-300 hover:bg-blue-50 hover:border-blue-400 transition-colors"
-          >
-            {selectedPlacement ? (
-              <div className="flex items-center space-x-2 max-w-full">
-                <Target className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                <span className="text-blue-600 font-medium truncate">
-                  {selectedPlacement.displayName}
-                </span>
-              </div>
+      return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <div
+          role="button"
+          className={`inline-flex items-center justify-between whitespace-nowrap rounded-lg border-2 bg-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm shadow-sm ring-offset-background transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 min-w-[120px] sm:min-w-[200px] max-w-[280px] sm:max-w-[350px] cursor-pointer ${
+            isKeyboardOpen 
+              ? 'border-blue-500 ring-2 ring-blue-500 ring-offset-2' 
+              : 'border-gray-300 hover:border-gray-400'
+          }`}
+        >
+          <div className="flex items-center space-x-1 sm:space-x-2 flex-1 min-w-0">
+            <Target className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+            
+            {!selectedPlacement ? (
+              <span className="text-gray-500 text-xs sm:text-sm truncate">
+                <span className="hidden sm:inline">Select Placement</span>
+                <span className="sm:hidden">Select</span>
+              </span>
             ) : (
-              <div className="flex items-center space-x-2 text-gray-500">
-                <Target className="h-4 w-4" />
-                <span>Select Placement...</span>
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-1 min-w-0 overflow-hidden">
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 text-xs px-1 sm:px-2 py-0.5 flex items-center space-x-1 whitespace-nowrap flex-shrink-0"
+                >
+                  <Target className="w-2 h-2 sm:w-3 sm:h-3 text-blue-600 flex-shrink-0" />
+                  <span 
+                    className="max-w-[100px] sm:max-w-[180px] truncate"
+                    style={{ minWidth: '50px', fontSize: 'max(10px, 0.75rem)' }}
+                  >
+                    {selectedPlacement.displayName}
+                  </span>
+                  <button
+                    onClick={handleClearSelection}
+                    className="ml-1 hover:bg-blue-200 rounded-full p-0.5 flex-shrink-0"
+                    title="Remove placement"
+                    aria-label="Remove placement"
+                  >
+                    <X className="w-2 h-2 sm:w-3 sm:h-3" />
+                  </button>
+                </Badge>
               </div>
             )}
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
+          </div>
+          <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2 text-gray-500 flex-shrink-0" />
+        </div>
+      </PopoverTrigger>
         
         <PopoverContent className="w-96 p-0" align="start">
           <Command shouldFilter={false}>
@@ -237,20 +265,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
           </Command>
         </PopoverContent>
       </Popover>
-
-      {selectedPlacement && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClearSelection}
-          className="text-gray-500 hover:text-gray-700"
-          title="Clear selection"
-        >
-          ✕
-        </Button>
-      )}
-    </div>
-  );
+    );
 });
 
 PlacementSelector.displayName = 'PlacementSelector'; 
