@@ -78,7 +78,7 @@ export function PlacementAnalyzerContent() {
 
   // Auto-detect and populate placement types (similar to sponsor auto-detection)
   useEffect(() => {
-    if (frames.length > 0 && autoPopulatedPlacementTypes.length === 0) {
+    if (frames.length > 0 && !selectedPlacement) {
       // Auto-populate with a default rightsholder-placement combination for demo
       // In real implementation, this would be based on frame analysis
       const defaultRightsholder = { id: 'ny-yankees', name: 'New York Yankees', league: 'MLB' as const, city: 'New York', teamName: 'Yankees' };
@@ -89,7 +89,7 @@ export function PlacementAnalyzerContent() {
         defaultPlacement
       );
       
-      setAutoPopulatedPlacementTypes(defaultPlacementTypes); // Show all placement types, not limited to 10
+      setAutoPopulatedPlacementTypes(defaultPlacementTypes); // Show all placement types
       
       // Auto-select the default placement
       setSelectedPlacement({
@@ -98,7 +98,7 @@ export function PlacementAnalyzerContent() {
         displayName: `${defaultRightsholder.name} - ${defaultPlacement}`
       });
     }
-  }, [frames, autoPopulatedPlacementTypes.length]);
+  }, [frames, selectedPlacement]);
 
   // When a placement is manually selected, update placement types
   useEffect(() => {
@@ -395,16 +395,13 @@ export function PlacementAnalyzerContent() {
         }
         break;
 
-      case 's':
+              case 's':
         e.preventDefault();
         {
-          const selectedFrames = framesRef.current.filter(frame => frame.isSelected && !frame.isRejected && !frame.isConfirmed && !frame.isMarkedForRejection);
-          
-          if (selectedFrames.length > 0) {
-            setIsPlacementDropdownKeyboardOpen(true);
-            if (placementSelectorRef.current) {
-              placementSelectorRef.current.openDropdown();
-            }
+          // Always allow opening placement selector, even without selected frames
+          setIsPlacementDropdownKeyboardOpen(true);
+          if (placementSelectorRef.current) {
+            placementSelectorRef.current.openDropdown();
           }
         }
         break;

@@ -39,10 +39,11 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     closeDropdown: () => setOpen(false)
   }));
 
-  // Close dropdown when keyboard mode changes
+  // Close dropdown when keyboard mode changes (but don't interfere with manual clicks)
   useEffect(() => {
-    if (!isKeyboardOpen && open) {
-      setOpen(false);
+    if (isKeyboardOpen && !open) {
+      // Only auto-open when keyboard mode is triggered
+      setOpen(true);
     }
   }, [isKeyboardOpen, open]);
 
