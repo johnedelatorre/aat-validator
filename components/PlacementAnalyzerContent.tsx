@@ -33,6 +33,7 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const [validatedBatches, setValidatedBatches] = useState(0);
   const [selectedPlacement, setSelectedPlacement] = useState<SelectedPlacement | null>(null);
+  const [recentlyUsedPlacements, setRecentlyUsedPlacements] = useState<SelectedPlacement[]>([]);
   
   const [autoPopulatedPlacementTypes, setAutoPopulatedPlacementTypes] = useState<PlacementType[]>([]);
   const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
@@ -276,6 +277,18 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
       setSelectedPlacement(placement);
     } else {
       setSelectedPlacement(placement);
+    }
+    
+    // Add to recently used placements (if not null and not already in the list)
+    if (placement) {
+      setRecentlyUsedPlacements(prev => {
+        // Remove if already exists to avoid duplicates
+        const filtered = prev.filter(p => 
+          !(p.rightsholder.id === placement.rightsholder.id && p.placementName === placement.placementName)
+        );
+        // Add to front and limit to 10
+        return [placement, ...filtered].slice(0, 10);
+      });
     }
     
     if (isPlacementDropdownKeyboardOpen) {
@@ -1169,6 +1182,7 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
           // Pass placement-specific props
           selectedPlacement={selectedPlacement}
           autoPopulatedPlacementTypes={autoPopulatedPlacementTypes}
+          recentlyUsedPlacements={recentlyUsedPlacements}
           onPlacementSelect={handlePlacementSelect}
           allFramesSelected={allUnprocessedFramesSelected}
           hasSelectableFrames={hasSelectableFrames}

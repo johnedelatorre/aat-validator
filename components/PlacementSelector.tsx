@@ -15,6 +15,7 @@ export interface SelectedPlacement {
 interface PlacementSelectorProps {
   selectedPlacement: SelectedPlacement | null;
   onPlacementSelect: (placement: SelectedPlacement | null) => void;
+  recentlyUsedPlacements?: SelectedPlacement[];
   isKeyboardOpen?: boolean;
   onDropdownClose?: () => void;
 }
@@ -27,6 +28,7 @@ export interface PlacementSelectorRef {
 export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelectorProps>(({
   selectedPlacement,
   onPlacementSelect,
+  recentlyUsedPlacements = [],
   isKeyboardOpen = false,
   onDropdownClose
 }, ref) => {
@@ -69,17 +71,39 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
   // Comprehensive search results
   const searchResults = useMemo(() => {
     if (!searchValue) {
-      // Show all rightsholder-placement combinations grouped by league
-      return getAllRightsholderPlacementCombinations().reduce((acc, combo) => {
-        const league = combo.rightsholder.league;
-        if (!acc[league]) acc[league] = [];
-        acc[league].push({
+      const results: Record<string, Array<{type: 'combination', item: any, searchMatch: string}>> = {};
+      
+      // Add recently used placements first (up to 10)
+      if (recentlyUsedPlacements.length > 0) {
+        results['Recently Used'] = recentlyUsedPlacements.slice(0, 10).map(placement => ({
           type: 'combination' as const,
-          item: combo,
-          searchMatch: combo.displayName
-        });
+          item: placement,
+          searchMatch: placement.displayName
+        }));
+      }
+      
+      // Show all rightsholder-placement combinations grouped by league
+      const allCombos = getAllRightsholderPlacementCombinations().reduce((acc, combo) => {
+        // Skip if this combo is already in recently used
+        const isInRecent = recentlyUsedPlacements.some(recent => 
+          recent.rightsholder.id === combo.rightsholder.id && 
+          recent.placementName === combo.placement.name
+        );
+        
+        if (!isInRecent) {
+          const league = combo.rightsholder.league;
+          if (!acc[league]) acc[league] = [];
+          acc[league].push({
+            type: 'combination' as const,
+            item: combo,
+            searchMatch: combo.displayName
+          });
+        }
         return acc;
       }, {} as Record<string, Array<{type: 'combination', item: any, searchMatch: string}>>);
+      
+      // Merge league results with recently used results
+      return { ...results, ...allCombos };
     }
 
     const search = searchValue.toLowerCase();
@@ -154,7 +178,7 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
     });
 
     return results;
-  }, [searchValue]);
+  }, [searchValue, recentlyUsedPlacements]);
 
   const handleDirectPlacementSelect = (combo: any) => {
     const placement: SelectedPlacement = {

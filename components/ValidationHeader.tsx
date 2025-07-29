@@ -32,6 +32,7 @@ interface ValidationHeaderProps {
   // Placement-related props (optional for sponsor workflow)
   selectedPlacement?: SelectedPlacement | null;
   autoPopulatedPlacementTypes?: PlacementType[];
+  recentlyUsedPlacements?: SelectedPlacement[];
   onPlacementSelect?: (placement: SelectedPlacement | null) => void;
   placementSelectorRef?: React.RefObject<{ openDropdown: () => void; closeDropdown: () => void }>;
   isPlacementDropdownKeyboardOpen?: boolean;
@@ -79,6 +80,7 @@ export function ValidationHeader({
   // Placement workflow props
   selectedPlacement,
   autoPopulatedPlacementTypes,
+  recentlyUsedPlacements,
   onPlacementSelect,
   placementSelectorRef,
   isPlacementDropdownKeyboardOpen = false,
@@ -197,6 +199,7 @@ export function ValidationHeader({
                   <PlacementSelector
                     ref={placementSelectorRef}
                     selectedPlacement={selectedPlacement || null}
+                    recentlyUsedPlacements={recentlyUsedPlacements}
                     onPlacementSelect={onPlacementSelect}
                     isKeyboardOpen={isPlacementDropdownKeyboardOpen}
                     onDropdownClose={onPlacementDropdownClose}
