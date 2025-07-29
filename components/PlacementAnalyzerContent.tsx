@@ -684,6 +684,7 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
+      setIsPlacementDropdownKeyboardOpen(false); // Reset keyboard state
       if (placementSelectorRef.current) {
         placementSelectorRef.current.closeDropdown();
       }

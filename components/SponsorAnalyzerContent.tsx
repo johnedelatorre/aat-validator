@@ -653,6 +653,7 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
   // Expose methods to parent component
   useImperativeHandle(ref, () => ({
     closeDropdown: () => {
+      setIsSponsorDropdownKeyboardOpen(false); // Reset keyboard state
       if (sponsorSelectorRef.current) {
         sponsorSelectorRef.current.closeDropdown();
       }
