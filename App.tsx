@@ -6,10 +6,16 @@ import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('sponsor-analyzer');
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const sponsorAnalyzerRef = useRef<SponsorAnalyzerContentRef>(null);
   const placementAnalyzerRef = useRef<PlacementAnalyzerContentRef>(null);
 
   const handleTabChange = (newTab: string) => {
+    // Don't switch if already on the target tab or currently transitioning
+    if (activeTab === newTab || isTransitioning) return;
+    
+    setIsTransitioning(true);
+    
     // Close dropdowns in the current tab before switching
     if (activeTab === 'sponsor-analyzer' && sponsorAnalyzerRef.current) {
       sponsorAnalyzerRef.current.closeDropdown();
@@ -17,7 +23,11 @@ export default function App() {
       placementAnalyzerRef.current.closeDropdown();
     }
     
-    setActiveTab(newTab);
+    // Add a small delay to allow dropdown to close gracefully before tab transition
+    setTimeout(() => {
+      setActiveTab(newTab);
+      setIsTransitioning(false);
+    }, 150); // 150ms delay for smooth dropdown close
   };
 
   return (
@@ -30,9 +40,12 @@ export default function App() {
           <div className="flex space-x-8">
             <button
               onClick={() => handleTabChange('sponsor-analyzer')}
+              disabled={isTransitioning}
               className={`py-4 px-2 text-sm font-medium transition-all duration-200 ease-in-out relative ${
                 activeTab === 'sponsor-analyzer'
                   ? 'text-blue-600 border-b-2 border-blue-600'
+                  : isTransitioning
+                  ? 'text-gray-400 border-b-2 border-transparent cursor-not-allowed'
                   : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'
               }`}
             >
@@ -46,9 +59,12 @@ export default function App() {
             
             <button
               onClick={() => handleTabChange('placement-analyzer')}
+              disabled={isTransitioning}
               className={`py-4 px-2 text-sm font-medium transition-all duration-200 ease-in-out relative ${
                 activeTab === 'placement-analyzer'
                   ? 'text-blue-600 border-b-2 border-blue-600'
+                  : isTransitioning
+                  ? 'text-gray-400 border-b-2 border-transparent cursor-not-allowed'
                   : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent hover:border-gray-300'
               }`}
             >
