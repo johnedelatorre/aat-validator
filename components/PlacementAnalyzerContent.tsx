@@ -400,8 +400,6 @@ export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentP
         break;
 
       case 's':
-        // Only handle 's' key when this tab is active
-        if (!isActive) return;
         e.preventDefault();
         {
           // Always allow opening placement selector, even without selected frames
@@ -640,6 +638,9 @@ export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentP
 
   // Keyboard event listeners
   useEffect(() => {
+    // Only add event listeners when this tab is active
+    if (!isActive) return;
+
     keyboardNavigationRef.current = handleKeyboardNavigation;
     workflowShortcutsRef.current = handleWorkflowShortcuts;
     
@@ -662,7 +663,7 @@ export function PlacementAnalyzerContent({ isActive }: PlacementAnalyzerContentP
       document.removeEventListener('keydown', stableKeyboardNavigationHandler);
       document.removeEventListener('keydown', stableWorkflowShortcutsHandler);
     };
-  }, []);
+  }, [isActive]);
 
   useEffect(() => {
     keyboardNavigationRef.current = handleKeyboardNavigation;
