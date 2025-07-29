@@ -40,6 +40,9 @@ export const SponsorSelector = forwardRef<SponsorSelectorRef, SponsorSelectorPro
     },
     closeDropdown: () => {
       setOpen(false);
+    },
+    isOpen: () => {
+      return open;
     }
   }));
 

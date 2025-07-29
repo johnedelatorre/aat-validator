@@ -49,7 +49,7 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
   }, [frames]);
   
   const [isSponsorDropdownKeyboardOpen, setIsSponsorDropdownKeyboardOpen] = useState(false);
-  const sponsorSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void } | null>(null);
+  const sponsorSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void; isOpen: () => boolean } | null>(null);
   const lastActionToastRef = useRef<string | number | null>(null);
   const [showVideoDrawer, setShowVideoDrawer] = useState(false);
   
@@ -659,7 +659,8 @@ export const SponsorAnalyzerContent = forwardRef<SponsorAnalyzerContentRef, Spon
       }
     },
     isDropdownOpen: () => {
-      return isSponsorDropdownKeyboardOpen;
+      // Check both keyboard state AND actual dropdown open state
+      return isSponsorDropdownKeyboardOpen || (sponsorSelectorRef.current?.isOpen?.() ?? false);
     }
   }));
 

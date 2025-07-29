@@ -35,7 +35,8 @@ export const PlacementSelector = forwardRef<PlacementSelectorRef, PlacementSelec
 
   useImperativeHandle(ref, () => ({
     openDropdown: () => setOpen(true),
-    closeDropdown: () => setOpen(false)
+    closeDropdown: () => setOpen(false),
+    isOpen: () => open
   }));
 
   // Handle keyboard mode - open dropdown when 's' key is pressed

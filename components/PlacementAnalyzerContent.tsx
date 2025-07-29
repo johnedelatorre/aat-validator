@@ -50,7 +50,7 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
   }, [frames]);
   
   const [isPlacementDropdownKeyboardOpen, setIsPlacementDropdownKeyboardOpen] = useState(false);
-  const placementSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void } | null>(null);
+  const placementSelectorRef = useRef<{ openDropdown: () => void; closeDropdown: () => void; isOpen: () => boolean } | null>(null);
   const lastActionToastRef = useRef<string | number | null>(null);
   const [showVideoDrawer, setShowVideoDrawer] = useState(false);
   
@@ -690,7 +690,8 @@ export const PlacementAnalyzerContent = forwardRef<PlacementAnalyzerContentRef, 
       }
     },
     isDropdownOpen: () => {
-      return isPlacementDropdownKeyboardOpen;
+      // Check both keyboard state AND actual dropdown open state
+      return isPlacementDropdownKeyboardOpen || (placementSelectorRef.current?.isOpen?.() ?? false);
     }
   }));
 
