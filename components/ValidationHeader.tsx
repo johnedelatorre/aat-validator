@@ -5,6 +5,8 @@ import { CheckCircle, Trash2, Info, CheckCircle2, Settings, Play } from 'lucide-
 import { Sponsor } from '../types';
 
 interface ValidationHeaderProps {
+  // NEW: Title prop for tab-specific headers
+  title?: string;
   queueCount: number;
   selectedCount: number;
   // NEW: Add count for frames in green selected state only
@@ -43,6 +45,7 @@ interface ValidationHeaderProps {
 }
 
 export function ValidationHeader({ 
+  title = "Sponsor Analyzer", // Default title
   queueCount, 
   selectedCount, 
   greenSelectedCount,
@@ -83,13 +86,13 @@ export function ValidationHeader({
   };
 
   return (
-    <header className="fixed top-12 left-0 right-0 z-40 w-full border-b bg-white shadow-sm">
+    <header className="relative top-0 left-0 right-0 z-40 w-full border-b bg-white shadow-sm">
       <div className="flex flex-col">
         {/* Main Header Row */}
         <div className="flex h-20 items-center justify-between px-6">
-          {/* Left side - Sponsor Analyzer title only */}
+          {/* Left side - Title */}
           <div className="flex items-center">
-            <h1 className="text-lg font-semibold text-gray-900">Sponsor Analyzer</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
           </div>
 
           {/* Right side - Video and Settings buttons, plus loading indicator */}
